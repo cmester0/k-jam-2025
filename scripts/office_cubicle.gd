@@ -184,7 +184,7 @@ func _ready() -> void:
 	handle_top.mesh = mesh_top
 	handle_top.material_override = handle_mat
 	handle_top.rotation_degrees = Vector3(0, 0, 90)
-	handle_top.position = Vector3(0.12, 0.1, 0.05)
+	handle_top.position = Vector3(0.12, 0.1, 0.0)
 	mug.add_child(handle_top)
 
 	# Middle segment
@@ -196,10 +196,10 @@ func _ready() -> void:
 	handle_mid.mesh = mesh_mid
 	handle_mid.material_override = handle_mat
 	handle_mid.rotation_degrees = Vector3(0, 0, 0)
-	handle_mid.position = Vector3(0.14, 0.07, 0.05)
+	handle_mid.position = Vector3(0.14, 0.07, 0.0)
 	mug.add_child(handle_mid)
 
-	# Bottom segment
+	# Bottom segments
 	var handle_bottom := MeshInstance3D.new()
 	var mesh_bottom := CylinderMesh.new()
 	mesh_bottom.top_radius = 0.02
@@ -208,7 +208,7 @@ func _ready() -> void:
 	handle_bottom.mesh = mesh_bottom
 	handle_bottom.material_override = handle_mat
 	handle_bottom.rotation_degrees = Vector3(0, 0, 90)
-	handle_bottom.position = Vector3(0.12, -0.02, -0.03)
+	handle_bottom.position = Vector3(0.12, 0.02, 0.0)
 	mug.add_child(handle_bottom)
 
 	# ----- COFFEE SURFACE -----
@@ -267,16 +267,16 @@ func _ready() -> void:
 			key.position = Vector3(x, y, z)
 			desk.add_child(key)
 
-	# ----- CHAIR -----
-	var chair := MeshInstance3D.new()
-	chair.mesh = BoxMesh.new()
-	chair.mesh.size = Vector3(0.6, 0.1, 0.6)
-	var chair_mat := StandardMaterial3D.new()
-	chair_mat.albedo_color = Color(0.15, 0.15, 0.18)
-	chair.material_override = chair_mat
-	chair.position = Vector3(0, -0.95, 0.0)
-	add_child(chair)
-#
+	## ----- CHAIR -----
+	#var chair := MeshInstance3D.new()
+	#chair.mesh = BoxMesh.new()
+	#chair.mesh.size = Vector3(0.6, 0.1, 0.6)
+	#var chair_mat := StandardMaterial3D.new()
+	#chair_mat.albedo_color = Color(0.15, 0.15, 0.18)
+	#chair.material_override = chair_mat
+	#chair.position = Vector3(0, -0.95, 0.0)
+	#add_child(chair)
+
 	## ----- CAMERA (PLAYER VIEW) -----
 	#var cam := Camera3D.new()
 	#cam.name = "Camera3D"
