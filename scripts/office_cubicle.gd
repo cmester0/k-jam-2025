@@ -70,25 +70,55 @@ func _ready() -> void:
 	desk_top.position = Vector3(0, -0.5, -1.8)
 	desk.add_child(desk_top)
 
-	# ----- MONITOR -----
-	var monitor := MeshInstance3D.new()
-	monitor.mesh = BoxMesh.new()
-	monitor.mesh.size = Vector3(0.6, 0.4, 0.03)
-	var mon_mat := StandardMaterial3D.new()
-	mon_mat.albedo_color = Color(0.1, 0.1, 0.1)
-	mon_mat.emission_enabled = true
-	mon_mat.emission = Color(0.0, 1.0, 0.8)
-	mon_mat.emission_energy_multiplier = 0.9
-	monitor.material_override = mon_mat
-	monitor.position = Vector3(0, -0.3, -2.25)
-	desk.add_child(monitor)
+	    # ----- MONITOR -----
+    var monitor_body := MeshInstance3D.new()
+    monitor_body.mesh = BoxMesh.new()
+    monitor_body.mesh.size = Vector3(0.65, 0.45, 0.05)
+    var body_mat := StandardMaterial3D.new()
+    body_mat.albedo_color = Color(0.05, 0.05, 0.05) # matte black frame
+    body_mat.roughness = 0.9
+    monitor_body.material_override = body_mat
+    monitor_body.position = Vector3(0, -0.28, -2.25)
+    desk.add_child(monitor_body)
 
-	# monitor light
-	var screen_light := OmniLight3D.new()
-	screen_light.light_energy = 1.2
-	screen_light.omni_range = 1.8
-	screen_light.position = Vector3(0, 0.1, 0)
-	monitor.add_child(screen_light)
+    # inner screen
+    var screen := MeshInstance3D.new()
+    screen.mesh = BoxMesh.new()
+    screen.mesh.size = Vector3(0.55, 0.35, 0.02)
+    var screen_mat := StandardMaterial3D.new()
+    screen_mat.albedo_color = Color(0.1, 0.2, 0.15)
+    screen_mat.emission_enabled = true
+    screen_mat.emission = Color(0.1, 0.8, 0.6)
+    screen_mat.emission_energy_multiplier = 0.8
+    screen.material_override = screen_mat
+    screen.position = Vector3(0, 0, -0.015)
+    monitor_body.add_child(screen)
+
+    # monitor stand
+    var stand_base := MeshInstance3D.new()
+    stand_base.mesh = BoxMesh.new()
+    stand_base.mesh.size = Vector3(0.25, 0.05, 0.25)
+    var stand_mat := StandardMaterial3D.new()
+    stand_mat.albedo_color = Color(0.05, 0.05, 0.05)
+    stand_mat.roughness = 0.8
+    stand_base.material_override = stand_mat
+    stand_base.position = Vector3(0, -0.38, -2.25)
+    desk.add_child(stand_base)
+
+    var stand_neck := MeshInstance3D.new()
+    stand_neck.mesh = BoxMesh.new()
+    stand_neck.mesh.size = Vector3(0.05, 0.15, 0.05)
+    stand_neck.material_override = stand_mat
+    stand_neck.position = Vector3(0, -0.33, -2.25)
+    desk.add_child(stand_neck)
+
+    # soft monitor light glow
+    var screen_light := OmniLight3D.new()
+    screen_light.light_energy = 0.9
+    screen_light.omni_range = 1.6
+    screen_light.position = Vector3(0, 0.1, 0)
+    monitor_body.add_child(screen_light)
+
 
 	# ----- COFFEE MUG (STATIC) -----
 	var mug := MeshInstance3D.new()
