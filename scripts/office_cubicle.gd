@@ -276,12 +276,12 @@ func _ready() -> void:
 	chair.material_override = chair_mat
 	chair.position = Vector3(0, -0.95, 0.0)
 	add_child(chair)
-
-	# ----- CAMERA (PLAYER VIEW) -----
-	var cam := Camera3D.new()
-	cam.name = "Camera3D"
-	cam.current = true
-	cam.position = Vector3(0, 0.9, 0.4)
-	add_child(cam)
+#
+	## ----- CAMERA (PLAYER VIEW) -----
+	#var cam := Camera3D.new()
+	#cam.name = "Camera3D"
+	#cam.current = true
+	#cam.position = Vector3(0, 0.9, 0.4)
+	#add_child(cam)
 
 	print("✅ Office cubicle generated successfully.")

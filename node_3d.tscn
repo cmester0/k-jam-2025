@@ -1,12 +1,30 @@
-[gd_scene load_steps=6 format=3 uid="uid://drae7lgqrqbnb"]
+[gd_scene load_steps=16 format=3 uid="uid://drae7lgqrqbnb"]
 
 [ext_resource type="Script" uid="uid://kkgnovggdk8a" path="res://player.gd" id="1_a202f"]
+[ext_resource type="Script" uid="uid://cfufnjs54lguo" path="res://cubical_sound_script.gd" id="1_wc5p8"]
+[ext_resource type="Script" uid="uid://b6lbfrmriyl0d" path="res://player_camera.gd" id="2_a0tk4"]
+[ext_resource type="Script" uid="uid://mi7r5wcchrkn" path="res://scripts/office_cubicle.gd" id="3_a0tk4"]
+[ext_resource type="AudioStream" uid="uid://ck8b7a1hjeyfy" path="res://sound/untitled.wav" id="3_jka67"]
+[ext_resource type="Script" uid="uid://dvc3pxx60aeh1" path="res://cubical_light.gd" id="3_r3fl7"]
+[ext_resource type="Script" uid="uid://dov662xi287oy" path="res://player_audio.gd" id="4_i5arm"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_4xowi"]
+[sub_resource type="BoxMesh" id="BoxMesh_noarx"]
 size = Vector3(60, 2, 60)
 
-[sub_resource type="BoxMesh" id="BoxMesh_a202f"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_noarx"]
 size = Vector3(60, 2, 60)
+
+[sub_resource type="BoxMesh" id="BoxMesh_r3fl7"]
+size = Vector3(2, 15, 60)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jka67"]
+size = Vector3(2, 15, 60)
+
+[sub_resource type="BoxMesh" id="BoxMesh_jka67"]
+size = Vector3(60, 15, 2)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_i5arm"]
+size = Vector3(60, 15, 2)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4xowi"]
 
@@ -14,14 +32,67 @@ size = Vector3(60, 2, 60)
 
 [node name="Main" type="Node3D"]
 
-[node name="Ground" type="StaticBody3D" parent="."]
+[node name="Map" type="Node3D" parent="."]
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-shape = SubResource("BoxShape3D_4xowi")
+[node name="StaticBody3D6" type="StaticBody3D" parent="Map"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16.161825, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
-mesh = SubResource("BoxMesh_a202f")
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D6"]
+mesh = SubResource("BoxMesh_noarx")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D6"]
+shape = SubResource("BoxShape3D_noarx")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Map"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D"]
+mesh = SubResource("BoxMesh_noarx")
+skeleton = NodePath("../..")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D"]
+shape = SubResource("BoxShape3D_noarx")
+
+[node name="StaticBody3D3" type="StaticBody3D" parent="Map"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 8.354, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D3"]
+mesh = SubResource("BoxMesh_r3fl7")
+skeleton = NodePath("../../StaticBody3D3")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D3"]
+shape = SubResource("BoxShape3D_jka67")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="Map"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29, 8, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D2"]
+mesh = SubResource("BoxMesh_r3fl7")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D2"]
+shape = SubResource("BoxShape3D_jka67")
+
+[node name="StaticBody3D5" type="StaticBody3D" parent="Map"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 30)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D5"]
+mesh = SubResource("BoxMesh_jka67")
+skeleton = NodePath("../../StaticBody3D5")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D5"]
+shape = SubResource("BoxShape3D_i5arm")
+
+[node name="StaticBody3D4" type="StaticBody3D" parent="Map"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, -29)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D4"]
+mesh = SubResource("BoxMesh_jka67")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D4"]
+shape = SubResource("BoxShape3D_i5arm")
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="Map"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.1025121, 0)
+script = ExtResource("1_wc5p8")
 
 [node name="Player" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.926096, 0)
@@ -37,11 +108,20 @@ mesh = SubResource("CapsuleMesh_a202f")
 skeleton = NodePath("../..")
 
 [node name="Camera3D" type="Camera3D" parent="Player/CharacterBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 0, 2.9600596, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.846591, 0)
+script = ExtResource("2_a0tk4")
 
-[node name="SpotLight3D" type="SpotLight3D" parent="Player/CharacterBody3D"]
-transform = Transform3D(0.9526297, 0.12791118, 0.27592656, -0.30413285, 0.4006538, 0.86428016, 1.9005864e-09, -0.90725714, 0.42057666, 0, 5.0282183, 0)
-light_color = Color(0.37254903, 1, 1, 1)
-light_energy = 10.237
-light_indirect_energy = 10.0
-light_size = 2.0
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="Player/CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8172951, 0)
+stream = ExtResource("3_jka67")
+script = ExtResource("4_i5arm")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(0.9526297, 0.12791117, 0.27592668, -0.30413285, 0.40065375, 0.86428, 1.9005864e-09, -0.907257, 0.42057666, 0, 2.342801, 0)
+light_color = Color(0.12941177, 1, 1, 1)
+omni_range = 12.155
+script = ExtResource("3_r3fl7")
+
+[node name="Office" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
+script = ExtResource("3_a0tk4")
