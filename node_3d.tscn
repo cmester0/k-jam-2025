@@ -1,0 +1,47 @@
+[gd_scene load_steps=6 format=3 uid="uid://drae7lgqrqbnb"]
+
+[ext_resource type="Script" uid="uid://kkgnovggdk8a" path="res://player.gd" id="1_a202f"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4xowi"]
+size = Vector3(60, 2, 60)
+
+[sub_resource type="BoxMesh" id="BoxMesh_a202f"]
+size = Vector3(60, 2, 60)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4xowi"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_a202f"]
+
+[node name="Main" type="Node3D"]
+
+[node name="Ground" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_4xowi")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
+mesh = SubResource("BoxMesh_a202f")
+
+[node name="Player" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.926096, 0)
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="Player"]
+script = ExtResource("1_a202f")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Player/CharacterBody3D"]
+shape = SubResource("CapsuleShape3D_4xowi")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Player/CharacterBody3D"]
+mesh = SubResource("CapsuleMesh_a202f")
+skeleton = NodePath("../..")
+
+[node name="Camera3D" type="Camera3D" parent="Player/CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 0, 2.9600596, 0)
+
+[node name="SpotLight3D" type="SpotLight3D" parent="Player/CharacterBody3D"]
+transform = Transform3D(0.9526297, 0.12791118, 0.27592656, -0.30413285, 0.4006538, 0.86428016, 1.9005864e-09, -0.90725714, 0.42057666, 0, 5.0282183, 0)
+light_color = Color(0.37254903, 1, 1, 1)
+light_energy = 10.237
+light_indirect_energy = 10.0
+light_size = 2.0

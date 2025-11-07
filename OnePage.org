@@ -1,0 +1,130 @@
+* Now there is two of them
+Puzzle: Excel document (Turn on / off light in `cells` cubicals)
+
+
+* Posiblities
+
+** Split Personality / Mental disorder
+*** Inspiration
+- SOMA
+- Hellblade (Helheim)
+- Standly Parable
+- (It takes two)
+- (bomb defusal manual)
+- That Night, Steeped by Blood River
+- 3 Minute Walk
+- Pools
+- EW/WE
+- Don't starve (together)
+
+*** Themes
+Trauma
+Multiple Personality
+Fears / fobias (triggers)
+
+Schizophrenia (Seing and hearing things)
+Trauma-related Dissociation
+
+https://www.youtube.com/watch?v=wfYbgdo8e-8
+
+*** Engine / assets
+- 3D
+- Sounds
+
+*** Story
+Pre-collapse
+Pre-discovary
+
+
+*** Focus
+Story telling
+
+The goal isn’t to “win” against dissociation, but to understand it — by maintaining balance between control and overwhelm.
+
+*** Category
+Walking simulator
+Like standly parable
+Environmental
+
+*** Mechanics
+Split Audio,
+Split visuals / color gradients,
+Someone else controls you,
+Blackouts / Partial story lines filled in.
+UI elements (like dialogue text or cursor responsiveness) start to “float” slightly out of sync.
+stamina / stress
+Contrast
+Things disaper (paintings, etc.)
+
+High stess: The camera detaches slightly behind or above the player’s body.
+
+*** The first
+- Calm Music (Classic, Lofi, etc.)
+*** The other
+- Caotic music (Metal, Noise, etc.)
+
+* Stress induced psychosis
+** 1. Perceptual Distortions
+Hallucinations
+- Auditory: Hearing voices (commenting, criticizing, or giving commands).
+- Visual: Seeing shapes, shadows, or figures that aren’t there.
+- Tactile / Sensory: Feeling touches, temperature changes, or movements that aren’t real.
+
+Altered senses
+Colors may seem more intense or muted.
+Sounds may be louder, distorted, or delayed.
+Objects may appear to “move” or change shape.
+
+** 2. Thought and Cognitive Changes
+
+Delusions (false beliefs)
+
+Feeling watched, persecuted, or controlled.
+
+Believing personal experiences have unusual or symbolic meaning.
+
+Disorganized thinking
+
+Jumping from topic to topic.
+
+Difficulty concentrating or forming coherent sentences.
+
+Memory gaps
+
+Partial amnesia or “blackouts.”
+
+Confusing dreams with reality.
+
+3. Emotional Changes
+
+Intense fear, paranoia, or anxiety.
+
+Rapid mood swings (from calm to terrified).
+
+Sense of unreality or detachment (derealization/depersonalization).
+
+4. Behavioral Effects
+
+Confusion or disorientation in familiar surroundings.
+
+Impulsivity or unusual actions that don’t match the situation.
+
+Withdrawal from social interaction.
+
+Sometimes hyperactivity or agitation, sometimes lethargy.
+
+5. Physiological Reactions
+
+Heart racing, sweating, hyperventilation due to anxiety.
+
+Sleep disruption, which worsens perception and stress.
+
+Sensory overload from bright lights, loud sounds, or crowded spaces.
+
+6. Duration and Triggers
+
+Usually short-lived (hours to days) if the stressor is removed.
+
+Often triggered by extreme emotional trauma, sleep deprivation, or severe anxiety.
+
+May resolve naturally, but can recur if stress persists.
