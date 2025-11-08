@@ -37,7 +37,7 @@ func _ready() -> void:
 		var cubicle := Node3D.new()
 		cubicle.name = "Cubicle_%02d" % i
 		add_child(cubicle)
-		_build_cubicle(cubicle)
+		_build_cubicle(cubicle, i + 1)
 		if i == 0:
 			row_a_bounds = _compute_cubicle_bounds(cubicle)
 			spacing = float(row_a_bounds.get("width", 0.0))
@@ -51,7 +51,7 @@ func _ready() -> void:
 		var cubicle := Node3D.new()
 		cubicle.name = "CubicleB_%02d" % i
 		add_child(cubicle)
-		_build_cubicle(cubicle)
+		_build_cubicle(cubicle, cubicle_count + i + 1)
 		cubicle.rotate_y(PI)
 		if i == 0:
 			row_b_bounds = _compute_cubicle_bounds(cubicle)
@@ -154,7 +154,7 @@ func _gather_collision_bounds(node: Node3D, parent_transform: Transform3D, bound
 		if child is Node3D:
 			_gather_collision_bounds(child, current_transform, bounds)
 
-func _build_cubicle(parent: Node3D) -> void:
+func _build_cubicle(parent: Node3D, employee_id: int) -> void:
 	var wall_mat := StandardMaterial3D.new()
 	wall_mat.albedo_color = Color(0.85, 0.85, 0.9)
 	wall_mat.roughness = 0.8
@@ -182,6 +182,7 @@ func _build_cubicle(parent: Node3D) -> void:
 	var front_wall_offset_x := -half_width
 	var front_wall := _create_static_mesh_body(parent, front_wall_size, wall_mat, Vector3(front_wall_offset_x, 0, wall_thickness * 0.5))
 	front_wall.name = "FrontWall"
+	_add_front_wall_id(front_wall, employee_id, front_wall_size)
 
 	var desk := Node3D.new()
 	desk.name = "Desk"
@@ -463,6 +464,39 @@ func _add_posters(parent: Node3D, depth: float) -> void:
 	poster_back_right.position = Vector3(0.8, 0.4, poster_z)
 	poster_back_right.rotation_degrees = Vector3(90, 0, 0)
 	parent.add_child(poster_back_right)
+
+
+func _add_front_wall_id(front_wall: StaticBody3D, employee_id: int, wall_size: Vector3) -> void:
+	if front_wall == null:
+		return
+
+	var header_label := Label3D.new()
+	header_label.name = "EmployeeIDHeader"
+	header_label.text = "EMPLOYEE"
+	header_label.horizontal_alignment = HorizontalAlignment.HORIZONTAL_ALIGNMENT_CENTER
+	header_label.vertical_alignment = VerticalAlignment.VERTICAL_ALIGNMENT_CENTER
+	header_label.pixel_size = 0.004
+	header_label.font_size = 24
+	header_label.modulate = Color(0.85, 0.7, 0.0)
+	header_label.outline_size = 2
+	header_label.outline_modulate = Color(0, 0, 0)
+	header_label.position = Vector3(0, 0.2, wall_size.z * 0.5 + 0.01)
+	header_label.rotation_degrees = Vector3.ZERO
+	front_wall.add_child(header_label)
+
+	var number_label := Label3D.new()
+	number_label.name = "EmployeeID"
+	number_label.text = "%02d" % employee_id
+	number_label.horizontal_alignment = HorizontalAlignment.HORIZONTAL_ALIGNMENT_CENTER
+	number_label.vertical_alignment = VerticalAlignment.VERTICAL_ALIGNMENT_CENTER
+	number_label.pixel_size = 0.006
+	number_label.font_size = 64
+	number_label.modulate = Color(0.85, 0.7, 0.0)
+	number_label.outline_size = 2
+	number_label.outline_modulate = Color(0, 0, 0)
+	number_label.position = Vector3(0, 0.0, wall_size.z * 0.5 + 0.01)
+	number_label.rotation_degrees = Vector3.ZERO
+	front_wall.add_child(number_label)
 
 
 func _create_static_mesh_body(parent: Node3D, size: Vector3, material: StandardMaterial3D, local_offset: Vector3) -> StaticBody3D:
