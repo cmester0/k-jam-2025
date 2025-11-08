@@ -1,6 +1,6 @@
 extends Area3D
 
-@export var target_scene : String = "res://scenes/ComputerDesktop.tscn"
+@export var target_scene : String = "res://scenes/Bootscreen.tscn"
 var player_inside := false
 @export var camera_node_path : NodePath = "../Player/Camera3D"  # Path from this node to the camera
 @export var camera_target_position : Vector3 = Vector3(0, 3.0, -5)  # World position
