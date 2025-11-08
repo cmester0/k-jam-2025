@@ -3,6 +3,7 @@ extends Control
 const TARGET_FILE := "Wells_Report.docx"
 const TARGET_PATH := ["Projects", "Client_Phoenix", "Quarterly", "Drafts"]
 const MAX_FOLDERS := 67
+const EXIT_SCENE_PATH := "res://node_3d.tscn"
 
 var folder_tree: Dictionary
 var mail_window: PanelContainer
@@ -16,6 +17,7 @@ var mission_failed: bool = false
 var countdown_remaining: int = 0
 const MISSION_DURATION_SECONDS := 300  # 5 minutes
 var send_prompt_window: PanelContainer
+var file_icon_texture: Texture2D
 @onready var cursor: Sprite2D
 var open_windows: Dictionary = {}
 var desktop_container: Control
@@ -42,6 +44,7 @@ func _ready() -> void:
 	
 	# Cleanup any stray top-level folder icons left from earlier edits/runs
 	_cleanup_orphan_icons()
+	_create_exit_button()
 	
 	# Create cursor last to ensure it's on top
 	_create_cursor()
@@ -631,6 +634,8 @@ func _create_folder_icon(name: String, pos: Vector2, content: Variant) -> void:
 func _on_folder_opened(folder_name: String, content: Variant) -> void:
 	# If this is the target file, show the send prompt window
 	if folder_name == TARGET_FILE:
+		if not mission_started:
+			return
 		_show_send_prompt()
 		return
 
@@ -823,6 +828,115 @@ func _find_child_by_name(root: Node, name: String) -> Node:
 	return default_node
 
 
+func _get_file_icon_texture() -> Texture2D:
+	if file_icon_texture:
+		return file_icon_texture
+
+	var icon_path := "res://textures/file_icon.png"
+	if ResourceLoader.exists(icon_path):
+		var loaded := load(icon_path) as Texture2D
+		if loaded:
+			file_icon_texture = loaded
+			return file_icon_texture
+
+	var width := 40
+	var height := 40
+	var img := Image.create(width, height, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+
+	var paper_color := Color(0.96, 0.97, 1.0)
+	for x in range(4, width - 4):
+		for y in range(4, height - 4):
+			img.set_pixel(x, y, paper_color)
+
+	var border_color := Color(0.2, 0.2, 0.35)
+	for x in range(4, width - 4):
+		img.set_pixel(x, 4, border_color)
+		img.set_pixel(x, height - 5, border_color)
+	for y in range(4, height - 4):
+		img.set_pixel(4, y, border_color)
+		img.set_pixel(width - 5, y, border_color)
+
+	var fold_color := Color(0.9, 0.92, 0.99)
+	for offset_y in range(4):
+		for offset_x in range(offset_y + 1):
+			img.set_pixel(width - 6 - offset_x, 4 + offset_y, fold_color)
+
+	var header_color := Color(0.32, 0.5, 0.85)
+	for x in range(6, width - 6):
+		for y in range(6, 10):
+			img.set_pixel(x, y, header_color)
+
+	var line_color := Color(0.55, 0.65, 0.9)
+	for i in range(3):
+		var line_y := 12 + i * 6
+		for x in range(7, width - 7):
+			img.set_pixel(x, line_y, line_color)
+			img.set_pixel(x, line_y + 1, line_color)
+
+	file_icon_texture = ImageTexture.create_from_image(img)
+	return file_icon_texture
+
+
+func _create_exit_button() -> void:
+	if has_node("ExitComputerButton"):
+		return
+
+	var exit_button := Button.new()
+	exit_button.name = "ExitComputerButton"
+	exit_button.text = "Exit Computer"
+	exit_button.anchor_left = 1.0
+	exit_button.anchor_right = 1.0
+	exit_button.anchor_top = 1.0
+	exit_button.anchor_bottom = 1.0
+	exit_button.offset_left = -220.0
+	exit_button.offset_right = -40.0
+	exit_button.offset_top = -70.0
+	exit_button.offset_bottom = -20.0
+	exit_button.custom_minimum_size = Vector2(180, 44)
+	exit_button.focus_mode = Control.FOCUS_ALL
+	exit_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	exit_button.z_index = RenderingServer.CANVAS_ITEM_Z_MAX
+	exit_button.top_level = true
+
+	var normal_style := StyleBoxFlat.new()
+	normal_style.bg_color = Color(0.16, 0.24, 0.32)
+	normal_style.border_color = Color(0.3, 0.55, 0.8)
+	normal_style.border_width_bottom = 2
+	normal_style.border_width_left = 2
+	normal_style.border_width_right = 2
+	normal_style.border_width_top = 2
+	normal_style.corner_radius_bottom_left = 8
+	normal_style.corner_radius_bottom_right = 8
+	normal_style.corner_radius_top_left = 8
+	normal_style.corner_radius_top_right = 8
+	exit_button.add_theme_stylebox_override("normal", normal_style)
+
+	var hover_style := normal_style.duplicate() as StyleBoxFlat
+	hover_style.bg_color = Color(0.22, 0.34, 0.44)
+	exit_button.add_theme_stylebox_override("hover", hover_style)
+
+	var pressed_style := normal_style.duplicate() as StyleBoxFlat
+	pressed_style.bg_color = Color(0.12, 0.18, 0.26)
+	pressed_style.border_color = Color(0.45, 0.7, 0.95)
+	exit_button.add_theme_stylebox_override("pressed", pressed_style)
+
+	exit_button.add_theme_color_override("font_color", Color(0.9, 0.97, 1))
+
+	exit_button.connect("pressed", Callable(self, "_on_exit_computer_pressed"))
+	add_child(exit_button)
+
+
+func _on_exit_computer_pressed() -> void:
+	if mission_timer and not mission_timer.is_stopped():
+		mission_timer.stop()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if not ResourceLoader.exists(EXIT_SCENE_PATH):
+		push_error("Exit scene not found: %s" % EXIT_SCENE_PATH)
+		return
+	get_tree().change_scene_to_file(EXIT_SCENE_PATH)
+
+
 func _create_window_folder_icon(name: String, content: Variant) -> Control:
 	var container_size := Vector2(64, 80)
 
@@ -843,11 +957,16 @@ func _create_window_folder_icon(name: String, content: Variant) -> Control:
 	folder.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_COVERED
 	folder.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-	var icon_path := "res://textures/folder_icon.png"
-	if ResourceLoader.exists(icon_path):
-		var icon_texture: Texture2D = load(icon_path) as Texture2D
-		if icon_texture:
-			folder.texture_normal = icon_texture
+	var icon_texture: Texture2D = null
+	if content is Dictionary:
+		var folder_icon_path := "res://textures/folder_icon.png"
+		if ResourceLoader.exists(folder_icon_path):
+			icon_texture = load(folder_icon_path) as Texture2D
+	else:
+		icon_texture = _get_file_icon_texture()
+
+	if icon_texture:
+		folder.texture_normal = icon_texture
 	else:
 		folder.texture_normal = null
 
