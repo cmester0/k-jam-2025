@@ -159,3 +159,16 @@ func _place_cubicle(cubicle: Node3D, target_center: Vector3) -> void:
 	var center_x: float = (float(bounds.get("min_x", 0.0)) + float(bounds.get("max_x", 0.0))) * 0.5
 	var center_z: float = (float(bounds.get("min_z", 0.0)) + float(bounds.get("max_z", 0.0))) * 0.5
 	cubicle.position = Vector3(target_center.x - center_x, 0.0, target_center.z - center_z)
+
+	if cubicle.employee_id == 10:
+		cubicle.get_tree().root.get_node("./Main/Area3D").position = cubicle.position # .transform.origin.x = 0
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position = cubicle.position # .transform.origin.x = 0
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position.y += 3.15
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position.x -= 1
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position.z += 0
+
+		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_rotation = -Vector3(0.0, 0.0, 0.0);
+		# scubicle.get_tree().root.get_node("./Main/Orb").position = cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position;
+
+		# .camera_target_position
+		print("here: ", cubicle.position)

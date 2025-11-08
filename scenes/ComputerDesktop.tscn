@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://bf8mfye52haxn"]
+[gd_scene load_steps=2 format=3 uid="uid://bmv6lktqt7foj"]
 
 [ext_resource type="Script" path="res://scripts/dynamic_desktop_loader.gd" id="1_ks0ts"]
 
