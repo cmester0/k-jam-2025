@@ -23,8 +23,9 @@ func _ready() -> void:
 func _rebuild() -> void:
 	_clear_children()
 	var wall_mat := StandardMaterial3D.new()
-	wall_mat.albedo_color = Color(0.85, 0.85, 0.9)
-	wall_mat.roughness = 0.8
+	wall_mat.albedo_color = Color(0.75, 0.75, 0.82)
+	wall_mat.roughness = 0.9
+	wall_mat.metallic = 0.0
 
 	var interior_depth: float = float(max(cubicle_depth, 1.5))
 	var front_edge_z: float = wall_thickness
@@ -115,16 +116,31 @@ func _rebuild() -> void:
 	screen_mat.albedo_color = Color(0.05, 0.1, 0.08)
 	screen_mat.emission_enabled = true
 	screen_mat.emission = Color(0.1, 0.8, 0.6)
-	screen_mat.emission_energy_multiplier = 1.8
+	screen_mat.emission_energy_multiplier = 3.5
 	screen.material_override = screen_mat
 	screen.position = Vector3(0, 0, -0.03)
 	monitor_body.add_child(screen)
 
-	var screen_light := OmniLight3D.new()
-	screen_light.light_energy = 1.1
-	screen_light.omni_range = 2.5
-	screen_light.position = Vector3(0, 0.0, 0.25)
+	# Use a SpotLight3D to simulate the screen emitting light forward only
+	var screen_light := SpotLight3D.new()
+	screen_light.light_color = Color(0.3, 0.6, 0.6)
+	screen_light.light_energy = 0.6
+	screen_light.spot_range = 2.0
+	screen_light.spot_angle = 90.0
+	screen_light.spot_angle_attenuation = 0.5
+	screen_light.position = Vector3(0, 0.0, -0.04)
+	screen_light.rotation_degrees = Vector3(0, 0, 0)
+	screen_light.shadow_enabled = true
+	screen_light.shadow_opacity = 0.9
+	screen_light.shadow_blur = 0.1
+	screen_light.shadow_bias = 0.05
+	screen_light.shadow_normal_bias = 1.0
 	screen.add_child(screen_light)
+
+	# Add monitor flicker script to screen - it will control both emission and light
+	var flicker_script = load("res://scripts/monitor_flicker.gd")
+	screen.set_script(flicker_script)
+	screen.set("base_light_energy", 0.6)
 
 	var mouse := MeshInstance3D.new()
 	var mouse_mesh := BoxMesh.new()

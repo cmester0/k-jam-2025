@@ -7,6 +7,7 @@ Starter i en elevator, man skal gå ud af. Efter hver dag går man tilbage til e
 En loftlampe længere væk, over en anden desk, er pludselig gået ud. Udforsk det.
 En cubicle der pludselig mangler.
 Ting der går i stykker; lamper fra loftet hænger og dingler, skærme der blinker, printere der spytter papir ud, posters der falder ned fra væggen.
+En lampe der pludselig springer. De begynder langsomt at lave flere lyde hver iteration, blinke mere og mere, indtil de springer.
 
 ## Folder Race
 Bugs:

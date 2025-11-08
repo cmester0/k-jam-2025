@@ -16,13 +16,15 @@ extends Node3D
 @export var rod_color: Color = Color(0.9, 0.9, 0.9)
 
 @export var light_height: float = 0.9
-@export var light_spacing: Vector2 = Vector2(3.2, 3.0)
+@export var light_spacing: Vector2 = Vector2(5, 5)
 @export var light_range: float = 9.0
-@export var light_energy: float = 1
+@export var light_energy: float = 0.8
 @export var light_color: Color = Color(1.0, 0.98, 0.92)
 @export var light_fixture_size: Vector2 = Vector2(1.1, 0.2)
-@export var fixture_emission_energy: float = 1
+@export var fixture_emission_energy: float = 1.5
 @export var fixture_color: Color = Color(0.95, 0.96, 0.98)
+@export var enable_light_flicker: bool = true
+@export var light_energy_variation: float = 0.3
 
 func setup(total_length: float, total_depth: float, center_z: float) -> void:
 	_clear_children()
@@ -196,6 +198,36 @@ func _spawn_fixture(local_position: Vector3) -> void:
 	tube2.position = Vector3(0.0, -housing_height * 0.5, tube_offset_z)
 	tube2.rotation_degrees = Vector3(0, 0, 90)
 	fixture.add_child(tube2)
+	
+	# Create a spotlight positioned in the center of the casing, shining downward
+	var spot_light := SpotLight3D.new()
+	spot_light.light_color = light_color
+	
+	# Randomize light energy for variation (some lights dimmer/brighter)
+	var energy_multiplier: float = 1.0 + randf_range(-light_energy_variation, light_energy_variation)
+	spot_light.light_energy = light_energy * energy_multiplier
+	
+	spot_light.spot_range = light_range
+	spot_light.spot_angle = 75.0
+	spot_light.spot_angle_attenuation = 1.8
+	spot_light.position = Vector3(0.0, -housing_height, 0.0)
+	spot_light.rotation_degrees = Vector3(-90, 0, 0)
+	spot_light.shadow_enabled = true
+	spot_light.shadow_opacity = 0.7
+	spot_light.shadow_blur = 0.5
+	spot_light.shadow_bias = 0.05
+	spot_light.shadow_normal_bias = 1.0
+	fixture.add_child(spot_light)
+	
+	# Add flicker script to all lights for dynamic effect
+	if enable_light_flicker:
+		var flicker_script = load("res://cubical_light.gd")
+		var flicker_node = Node.new()
+		flicker_node.set_script(flicker_script)
+		flicker_node.set("flicker_interval", randf_range(0.02, 0.05))
+		flicker_node.set("flicker_weight", randf_range(0.03, 0.08))
+		flicker_node.set("base_energy", spot_light.light_energy)
+		spot_light.add_child(flicker_node)
 	
 	# Add vertical rods at each end of the fixture
 	var rod_offset_x := light_fixture_size.x * 0.5 - rod_thickness
