@@ -1,6 +1,12 @@
 [gd_scene load_steps=2 format=3 uid="uid://bf8mfye52haxn"]
 
-[ext_resource type="Script" path="res://scripts/computer_desktop.gd" id="1_ks0ts"]
+[ext_resource type="Script" path="res://scripts/dynamic_desktop_loader.gd" id="1_ks0ts"]
 
 [node name="ComputerDesktop" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_ks0ts")
