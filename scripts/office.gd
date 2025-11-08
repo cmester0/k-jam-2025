@@ -31,7 +31,6 @@ func _ready() -> void:
 
 func _rebuild_office() -> void:
 	_clear_office()
-	_build_environment()
 
 	if grid_rows <= 0 or grid_columns <= 0:
 		var fallback_length := 12.0
@@ -75,19 +74,6 @@ func _clear_office() -> void:
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
-
-func _build_environment() -> void:
-	var env := WorldEnvironment.new()
-	var environment := Environment.new()
-	environment.ambient_light_color = Color(0.15, 0.18, 0.22)
-	environment.ambient_light_energy = 0.15
-	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	environment.tonemap_exposure = 0.9
-	environment.ssao_enabled = true
-	environment.ssao_radius = 2.0
-	environment.ssao_intensity = 1.5
-	env.environment = environment
-	add_child(env)
 
 func _create_drop_ceiling(total_length: float, total_depth: float, center_z: float) -> void:
 	if DropCeiling == null:
