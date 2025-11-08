@@ -1,22 +1,19 @@
-[gd_scene load_steps=25 format=3 uid="uid://drae7lgqrqbnb"]
+[gd_scene load_steps=27 format=3 uid="uid://drae7lgqrqbnb"]
 
 [ext_resource type="Shader" uid="uid://in311gihvv61" path="res://shader/floor_shader.gdshader" id="1_6iypd"]
 [ext_resource type="Script" uid="uid://kkgnovggdk8a" path="res://player.gd" id="1_a202f"]
 [ext_resource type="Script" uid="uid://cfufnjs54lguo" path="res://cubical_sound_script.gd" id="1_wc5p8"]
 [ext_resource type="Script" uid="uid://b6lbfrmriyl0d" path="res://player_camera.gd" id="2_a0tk4"]
-[ext_resource type="Script" uid="uid://csujpnt82ita5" path="res://scripts/office.gd" id="3_a0tk4"]
+[ext_resource type="Script" uid="uid://dl2grq3dproqn" path="res://scripts/floor_mesh.gd" id="2_cdqbm"]
+[ext_resource type="Script" path="res://scripts/office.gd" id="3_a0tk4"]
 [ext_resource type="AudioStream" uid="uid://ck8b7a1hjeyfy" path="res://sound/untitled.wav" id="3_jka67"]
 [ext_resource type="Script" uid="uid://dvc3pxx60aeh1" path="res://cubical_light.gd" id="3_r3fl7"]
 [ext_resource type="Script" uid="uid://dov662xi287oy" path="res://player_audio.gd" id="4_i5arm"]
 [ext_resource type="Script" uid="uid://cdmnois872y32" path="res://area_3d.gd" id="9_4arys"]
 [ext_resource type="Shader" uid="uid://l6y0mcah5cqj" path="res://shader/camera_surface_shader.gdshader" id="10_6iypd"]
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_6iypd"]
-render_priority = 0
-shader = ExtResource("1_6iypd")
+[ext_resource type="Script" uid="uid://dn1dnjfnyvkkb" path="res://scripts/camera_shader_mesh.gd" id="11_tereu"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_noarx"]
-material = SubResource("ShaderMaterial_6iypd")
 size = Vector3(60, 2, 60)
 subdivide_width = 100
 subdivide_height = 100
@@ -25,16 +22,21 @@ subdivide_depth = 100
 [sub_resource type="BoxShape3D" id="BoxShape3D_noarx"]
 size = Vector3(60, 2, 60)
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6iypd"]
+render_priority = 0
+shader = ExtResource("1_6iypd")
+shader_parameter/stress_level_1 = false
+
 [sub_resource type="BoxMesh" id="BoxMesh_r3fl7"]
 size = Vector3(2, 15, 60)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_jka67"]
 size = Vector3(2, 15, 60)
 
-[sub_resource type="BoxMesh" id="BoxMesh_jka67"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_i5arm"]
 size = Vector3(60, 15, 2)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_i5arm"]
+[sub_resource type="BoxMesh" id="BoxMesh_jka67"]
 size = Vector3(60, 15, 2)
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_4xowi"]
@@ -60,6 +62,7 @@ shader_parameter/edge_threshold = 0.2
 shader_parameter/line_color = Color(0.043, 0.282, 0.467, 1)
 shader_parameter/background_color = Color(0.408, 0.969, 0.694, 1)
 shader_parameter/depth_range = 0.0
+shader_parameter/stress_level_1 = false
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tereu"]
 
@@ -82,9 +85,11 @@ shape = SubResource("BoxShape3D_noarx")
 [node name="Ground" type="StaticBody3D" parent="Map"]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Map/Ground"]
+material_override = SubResource("ShaderMaterial_6iypd")
 extra_cull_margin = 16384.0
 mesh = SubResource("BoxMesh_noarx")
 skeleton = NodePath("../..")
+script = ExtResource("2_cdqbm")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Map/Ground"]
 shape = SubResource("BoxShape3D_noarx")
@@ -110,10 +115,6 @@ shape = SubResource("BoxShape3D_jka67")
 
 [node name="StaticBody3D5" type="StaticBody3D" parent="Map"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 30)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Map/StaticBody3D5"]
-mesh = SubResource("BoxMesh_jka67")
-skeleton = NodePath("../../StaticBody3D5")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Map/StaticBody3D5"]
 shape = SubResource("BoxShape3D_i5arm")
@@ -173,7 +174,9 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5486724, 0.83314323)
 extra_cull_margin = 16384.0
 mesh = SubResource("QuadMesh_tereu")
 surface_material_override/0 = SubResource("ShaderMaterial_cdqbm")
+script = ExtResource("11_tereu")
 
 [node name="Orb" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -5)
+visible = false
 mesh = SubResource("SphereMesh_cdqbm")
