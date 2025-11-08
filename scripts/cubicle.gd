@@ -81,6 +81,27 @@ func _rebuild() -> void:
 	var desk_top := _create_static_mesh_body(desk, Vector3(1.8, 0.08, desk_depth), desk_mat, Vector3(0, -0.5, 0))
 	desk_top.name = "DeskTop"
 
+	var leg_mat := StandardMaterial3D.new()
+	leg_mat.albedo_color = Color(0.4, 0.35, 0.25)
+	leg_mat.roughness = 0.7
+	var leg_height := 0.8
+	var leg_thickness := 0.08
+	var desk_top_size := Vector3(1.8, 0.08, desk_depth)
+	var leg_positions := [
+		Vector3(-desk_top_size.x * 0.45, -0.5 - leg_height * 0.5, -desk_top_size.z * 0.4),
+		Vector3(desk_top_size.x * 0.45, -0.5 - leg_height * 0.5, -desk_top_size.z * 0.4),
+		Vector3(-desk_top_size.x * 0.45, -0.5 - leg_height * 0.5, desk_top_size.z * 0.4),
+		Vector3(desk_top_size.x * 0.45, -0.5 - leg_height * 0.5, desk_top_size.z * 0.4)
+	]
+	for i in range(leg_positions.size()):
+		var leg := MeshInstance3D.new()
+		leg.mesh = BoxMesh.new()
+		leg.mesh.size = Vector3(leg_thickness, leg_height, leg_thickness)
+		leg.material_override = leg_mat
+		leg.position = leg_positions[i]
+		leg.name = "Leg%d" % i
+		desk.add_child(leg)
+
 	var stand_mat := StandardMaterial3D.new()
 	stand_mat.albedo_color = Color(0.05, 0.05, 0.05)
 	stand_mat.roughness = 0.8
