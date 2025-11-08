@@ -152,12 +152,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8172951, 0)
 stream = ExtResource("3_jka67")
 script = ExtResource("4_i5arm")
 
-[node name="OmniLight3D" type="OmniLight3D" parent="."]
-transform = Transform3D(0.9526297, 0.12791117, 0.27592668, -0.30413285, 0.40065375, 0.86428, 1.9005864e-09, -0.907257, 0.42057666, 0, 2.342801, 0)
-light_color = Color(0.12941177, 1, 1, 1)
-omni_range = 12.155
-script = ExtResource("3_r3fl7")
-
 [node name="Office" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
 script = ExtResource("3_a0tk4")

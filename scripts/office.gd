@@ -118,8 +118,13 @@ func _clear_office() -> void:
 func _build_environment() -> void:
 	var env := WorldEnvironment.new()
 	var environment := Environment.new()
-	environment.ambient_light_color = Color(1, 1, 1)
-	environment.ambient_light_energy = 1.0
+	environment.ambient_light_color = Color(0.15, 0.18, 0.22)
+	environment.ambient_light_energy = 0.15
+	environment.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	environment.tonemap_exposure = 0.9
+	environment.ssao_enabled = true
+	environment.ssao_radius = 2.0
+	environment.ssao_intensity = 1.5
 	env.environment = environment
 	add_child(env)
 
@@ -130,8 +135,9 @@ func _create_floor(total_length: float, total_depth: float, center_z: float) -> 
 	floor_mesh.size = Vector2(total_length, total_depth)
 	floor_mesh_instance.mesh = floor_mesh
 	var floor_mat := StandardMaterial3D.new()
-	floor_mat.albedo_color = Color(0.25, 0.28, 0.3)
-	floor_mat.roughness = 1.0
+	floor_mat.albedo_color = Color(0.18, 0.20, 0.22)
+	floor_mat.roughness = 0.95
+	floor_mat.metallic = 0.0
 	floor_mesh_instance.material_override = floor_mat
 	floor_mesh_instance.position = Vector3(0, -1.0, center_z)
 	add_child(floor_mesh_instance)
