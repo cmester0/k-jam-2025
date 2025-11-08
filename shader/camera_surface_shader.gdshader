@@ -13,6 +13,8 @@ uniform vec3 background_color: source_color = vec3(0.408, 0.969, 0.694);
 
 uniform float depth_range:hint_range(0.1, 100.0, 0.1);
 
+uniform bool stress_level_1 = false; // variable that can be changed from code
+
 const mat3 sobel_y = mat3(
 	vec3(1.0, 0.0, -1.0),
 	vec3(2.0, 0.0, -2.0),
@@ -44,7 +46,11 @@ void fragment() {
 	
 	ALBEDO = normal; 				// showing normal texture
     
-	ALPHA = 0.0;
+	if (stress_level_1) {
+		ALPHA = 0.1;
+	} else {
+		ALPHA = 0.0;
+	}
 
     // float r = sin(TIME) * 0.5 + 0.5;   // oscillates between 0–1
     // float g = sin(TIME + 2.0) * 0.5 + 0.5; // phase-shifted
