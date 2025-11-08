@@ -824,58 +824,48 @@ func _find_child_by_name(root: Node, name: String) -> Node:
 
 
 func _create_window_folder_icon(name: String, content: Variant) -> Control:
-	# Create a small folder icon control suitable for placement inside folder windows.
+	var container_size := Vector2(64, 80)
+
 	var vbox := VBoxContainer.new()
-	var container_size := Vector2(100, 90)  # Slightly larger for better readability
 	vbox.custom_minimum_size = container_size
+	vbox.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	vbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	vbox.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 	var center := CenterContainer.new()
-	center.custom_minimum_size = Vector2(container_size.x, 60)
+	center.custom_minimum_size = Vector2(container_size.x, 48)
+	vbox.add_child(center)
 
 	var folder := TextureButton.new()
-	var icon_size := Vector2(48, 48)  # Slightly larger icons
-	
-	# Choose icon based on whether this is a file or folder
-	if content is Dictionary:  # This is a folder
-		folder.texture_normal = load("res://textures/folder_icon.png")
-	else:  # This is a file (like our target)
-		folder.texture_normal = load("res://textures/folder_icon.png")  # You might want a different icon for files
-	
 	folder.ignore_texture_size = true
-	folder.custom_minimum_size = icon_size
+	folder.custom_minimum_size = Vector2(40, 40)
 	folder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	folder.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_COVERED
-	
-	# Add hover effect
 	folder.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	folder.modulate = Color(0.9, 0.9, 0.9)  # Slightly dimmed by default
-	folder.connect("mouse_entered", func(): folder.modulate = Color(1, 1, 1))  # Full brightness on hover
+
+	var icon_path := "res://textures/folder_icon.png"
+	if ResourceLoader.exists(icon_path):
+		var icon_texture: Texture2D = load(icon_path) as Texture2D
+		if icon_texture:
+			folder.texture_normal = icon_texture
+	else:
+		folder.texture_normal = null
+
+	folder.modulate = Color(0.9, 0.9, 0.9)
+	folder.connect("mouse_entered", func(): folder.modulate = Color(1, 1, 1))
 	folder.connect("mouse_exited", func(): folder.modulate = Color(0.9, 0.9, 0.9))
-	
 	center.add_child(folder)
-	vbox.add_child(center)
 
 	var label := Label.new()
 	label.text = name
-	label.custom_minimum_size = Vector2(container_size.x, 25)
+	label.custom_minimum_size = Vector2(container_size.x, 20)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.add_theme_color_override("font_color", Color(0.8, 0.95, 1.0))
-	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", Color(0.7, 0.9, 1))
+	label.add_theme_font_size_override("font_size", 10)
 	vbox.add_child(label)
 
-	# Make the entire VBox clickable
-	var button := Button.new()
-	button.flat = true
-	button.mouse_filter = Control.MOUSE_FILTER_STOP
-	button.focus_mode = Control.FOCUS_NONE
-	button.modulate = Color(1, 1, 1, 0)
-	button.custom_minimum_size = container_size
-	button.connect("pressed", Callable(self, "_on_folder_opened").bind(name, content))
-	vbox.add_child(button)
-	button.show_behind_parent = true
+	folder.connect("pressed", Callable(self, "_on_folder_opened").bind(name, content))
 
 	return vbox
 
