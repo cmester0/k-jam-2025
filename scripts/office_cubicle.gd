@@ -3,9 +3,8 @@ extends Node3D
 # Static environment – no movement or particle effects.
 
 @export var cubicle_count: int = 20
-@export var aisle_width: float = 5.0
-@export var cubicle_depth: float = 4.0
-@export var entry_gap: float = 1.0
+@export var aisle_width: float = 6.0
+@export var cubicle_depth: float = 3.0
 @export var wall_thickness: float = 0.06
 
 func _ready() -> void:
@@ -162,12 +161,11 @@ func _build_cubicle(parent: Node3D) -> void:
 
 	var wall_height := 2.0
 	var half_width := 2.0
-	var safe_depth: float = max(cubicle_depth, 1.2)
-	var max_gap: float = max(0.3, safe_depth - 0.2)
-	var gap: float = clampf(entry_gap, 0.3, max_gap)
-	var side_length: float = max(0.2, safe_depth - gap)
-	var back_center_z: float = -safe_depth - wall_thickness * 0.5
-	var side_center_z: float = -safe_depth + side_length * 0.5
+	var interior_depth: float = max(cubicle_depth, 1.5)
+	var front_edge_z: float = wall_thickness
+	var back_center_z: float = -interior_depth - wall_thickness * 0.5
+	var side_length: float = max(0.2, front_edge_z - back_center_z)
+	var side_center_z: float = (back_center_z + front_edge_z) * 0.5
 
 	var back_wall_size := Vector3(half_width * 2.0, wall_height, wall_thickness)
 	var back_wall := _create_static_mesh_body(parent, back_wall_size, wall_mat, Vector3(0, 0, back_center_z))
@@ -180,21 +178,26 @@ func _build_cubicle(parent: Node3D) -> void:
 	var right_wall := _create_static_mesh_body(parent, side_wall_size, wall_mat, Vector3(half_width, 0, side_center_z))
 	right_wall.name = "RightWall"
 
+	var front_wall_size := Vector3(half_width * 0.5, wall_height, wall_thickness)
+	var front_wall_offset_x := -half_width
+	var front_wall := _create_static_mesh_body(parent, front_wall_size, wall_mat, Vector3(front_wall_offset_x, 0, wall_thickness * 0.5))
+	front_wall.name = "FrontWall"
+
 	var desk := Node3D.new()
 	desk.name = "Desk"
 	var desk_depth := 1.0
 	var desk_front_margin := 0.2
 	var desk_back_margin := 0.2
-	var min_center: float = -safe_depth + (desk_depth * 0.5) + desk_back_margin
-	var max_center: float = -gap - desk_front_margin - (desk_depth * 0.5)
+	var min_center: float = -interior_depth + (desk_depth * 0.5) + desk_back_margin
+	var max_center: float = front_edge_z - desk_front_margin - (desk_depth * 0.5)
 	if min_center > max_center:
 		var mid: float = (min_center + max_center) * 0.5
 		min_center = mid
 		max_center = mid
-	var initial_center: float = -safe_depth + 1.0
+	var initial_center: float = -interior_depth + 1.0
 	var desk_center_z: float = clampf(initial_center, min_center, max_center)
-	var back_limit: float = -safe_depth + (desk_depth * 0.5)
-	var front_limit: float = -gap - (desk_depth * 0.5)
+	var back_limit: float = -interior_depth + (desk_depth * 0.5)
+	var front_limit: float = front_edge_z - (desk_depth * 0.5)
 	var limit_min: float = min(back_limit, front_limit)
 	var limit_max: float = max(back_limit, front_limit)
 	desk_center_z = clampf(desk_center_z, limit_min, limit_max)
@@ -385,7 +388,7 @@ func _build_cubicle(parent: Node3D) -> void:
 			key.position = Vector3(x, y, z)
 			desk.add_child(key)
 
-	_add_posters(parent, safe_depth)
+	_add_posters(parent, interior_depth)
 
 
 func make_poster_material(texture_path: String, poster_size) -> StandardMaterial3D:
