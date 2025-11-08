@@ -15,8 +15,8 @@ var _target_floor: int = 0
 var _floors: Array[float] = [0.0, 10.0, 20.0]
 
 var _elevator_car: Node3D
-var _left_door: MeshInstance3D
-var _right_door: MeshInstance3D
+var _left_door: StaticBody3D
+var _right_door: StaticBody3D
 var _door_open_amount: float = 0.0
 
 func setup(width: float, depth: float, height: float) -> void:
@@ -27,10 +27,13 @@ func setup(width: float, depth: float, height: float) -> void:
 
 func _ready() -> void:
 	_rebuild()
-	# Start with doors open
-	_doors_open = true
-	_door_open_amount = 1.0
+	# Start with doors closed
+	_doors_open = false
+	_door_open_amount = 0.0
 	call_deferred("_update_door_positions")
+	# Open doors after 1 second
+	await get_tree().create_timer(1.0).timeout
+	open_doors()
 
 func _rebuild() -> void:
 	_clear_children()
@@ -51,27 +54,10 @@ func _build_elevator_shaft() -> void:
 	var back_wall := _create_mesh_wall(
 		Vector3(elevator_width, elevator_height, 0.1),
 		shaft_mat,
-		Vector3(0, elevator_height * 0.5, -elevator_depth * 0.5)
+		Vector3(0, elevator_height * 0.5, -elevator_depth * 0.5 - 0.05)
 	)
 	back_wall.name = "BackWall"
 	add_child(back_wall)
-	
-	# No side walls in shaft - they would block entrance when rotated
-	
-	# Floor indicator above door
-	var indicator := Label3D.new()
-	indicator.name = "FloorIndicator"
-	indicator.text = "FLOOR 1"
-	indicator.horizontal_alignment = HorizontalAlignment.HORIZONTAL_ALIGNMENT_CENTER
-	indicator.vertical_alignment = VerticalAlignment.VERTICAL_ALIGNMENT_CENTER
-	indicator.pixel_size = 0.008
-	indicator.font_size = 48
-	indicator.modulate = Color(1.0, 0.8, 0.0)
-	indicator.outline_size = 3
-	indicator.outline_modulate = Color(0, 0, 0)
-	indicator.position = Vector3(0, elevator_height + 0.5, elevator_depth * 0.5 + 0.05)
-	indicator.rotation_degrees = Vector3(0, 180, 0)
-	add_child(indicator)
 
 func _build_elevator_car() -> void:
 	_elevator_car = Node3D.new()
@@ -79,56 +65,138 @@ func _build_elevator_car() -> void:
 	_elevator_car.position = Vector3(0, 0, 0)
 	add_child(_elevator_car)
 	
-	var car_mat := StandardMaterial3D.new()
-	car_mat.albedo_color = Color(0.7, 0.7, 0.75)
-	car_mat.metallic = 0.3
-	car_mat.roughness = 0.4
+	var wall_thickness := 0.1
+	var wall_height := elevator_height
 	
-	# Elevator ceiling
-	var ceiling := MeshInstance3D.new()
-	ceiling.name = "Ceiling"
-	var ceiling_mesh := BoxMesh.new()
-	ceiling_mesh.size = Vector3(elevator_width, 0.1, elevator_depth)
-	ceiling.mesh = ceiling_mesh
-	ceiling.material_override = car_mat
-	ceiling.position = Vector3(0, elevator_height, 0)
-	_elevator_car.add_child(ceiling)
+	# Materials
+	var wall_mat := StandardMaterial3D.new()
+	wall_mat.albedo_color = Color(0.6, 0.6, 0.65)
+	wall_mat.metallic = 0.3
+	wall_mat.roughness = 0.4
 	
-	# Side walls of elevator car (visual only, no collision to allow entry)
-	var side_mat := StandardMaterial3D.new()
-	side_mat.albedo_color = Color(0.6, 0.6, 0.65)
-	side_mat.metallic = 0.3
-	side_mat.roughness = 0.4
+	var door_mat := StandardMaterial3D.new()
+	door_mat.albedo_color = Color(0.5, 0.5, 0.55)
+	door_mat.metallic = 0.5
+	door_mat.roughness = 0.3
 	
-	# Left side wall
-	var left_side := MeshInstance3D.new()
-	left_side.name = "LeftSide"
-	var left_mesh := BoxMesh.new()
-	left_mesh.size = Vector3(0.05, elevator_height - 0.1, elevator_depth - 0.2)
-	left_side.mesh = left_mesh
-	left_side.material_override = side_mat
-	left_side.position = Vector3(-elevator_width * 0.5 + 0.025, elevator_height * 0.5, -0.1)
-	_elevator_car.add_child(left_side)
+	# Floor (visual only, no collision needed)
+	var floor_mesh := MeshInstance3D.new()
+	floor_mesh.name = "Floor"
+	var floor_box := BoxMesh.new()
+	floor_box.size = Vector3(elevator_width, 0.1, elevator_depth)
+	floor_mesh.mesh = floor_box
+	floor_mesh.material_override = wall_mat
+	floor_mesh.position = Vector3(0, -0.05, 0)
+	_elevator_car.add_child(floor_mesh)
 	
-	# Right side wall
-	var right_side := MeshInstance3D.new()
-	right_side.name = "RightSide"
-	var right_mesh := BoxMesh.new()
-	right_mesh.size = Vector3(0.05, elevator_height - 0.1, elevator_depth - 0.2)
-	right_side.mesh = right_mesh
-	right_side.material_override = side_mat
-	right_side.position = Vector3(elevator_width * 0.5 - 0.025, elevator_height * 0.5, -0.1)
-	_elevator_car.add_child(right_side)
+	# Ceiling (visual only)
+	var ceiling_mesh := MeshInstance3D.new()
+	ceiling_mesh.name = "Ceiling"
+	var ceiling_box := BoxMesh.new()
+	ceiling_box.size = Vector3(elevator_width, 0.1, elevator_depth)
+	ceiling_mesh.mesh = ceiling_box
+	ceiling_mesh.material_override = wall_mat
+	ceiling_mesh.position = Vector3(0, elevator_height, 0)
+	_elevator_car.add_child(ceiling_mesh)
 	
-	# Back wall of car
-	var back_side := MeshInstance3D.new()
-	back_side.name = "BackSide"
-	var back_mesh := BoxMesh.new()
-	back_mesh.size = Vector3(elevator_width, elevator_height - 0.1, 0.05)
-	back_side.mesh = back_mesh
-	back_side.material_override = side_mat
-	back_side.position = Vector3(0, elevator_height * 0.5, -elevator_depth * 0.5 + 0.025)
-	_elevator_car.add_child(back_side)
+	# Left wall (StaticBody3D with mesh and collision)
+	var left_wall := StaticBody3D.new()
+	left_wall.name = "LeftWall"
+	left_wall.position = Vector3(-elevator_width * 0.5 + wall_thickness * 0.5, wall_height * 0.5, 0)
+	_elevator_car.add_child(left_wall)
+	
+	var left_wall_mesh := MeshInstance3D.new()
+	var left_wall_box := BoxMesh.new()
+	left_wall_box.size = Vector3(wall_thickness, wall_height, elevator_depth)
+	left_wall_mesh.mesh = left_wall_box
+	left_wall_mesh.material_override = wall_mat
+	left_wall.add_child(left_wall_mesh)
+	
+	var left_wall_collision := CollisionShape3D.new()
+	var left_wall_shape := BoxShape3D.new()
+	left_wall_shape.size = Vector3(wall_thickness, wall_height, elevator_depth)
+	left_wall_collision.shape = left_wall_shape
+	left_wall.add_child(left_wall_collision)
+	
+	# Right wall (StaticBody3D with mesh and collision)
+	var right_wall := StaticBody3D.new()
+	right_wall.name = "RightWall"
+	right_wall.position = Vector3(elevator_width * 0.5 - wall_thickness * 0.5, wall_height * 0.5, 0)
+	_elevator_car.add_child(right_wall)
+	
+	var right_wall_mesh := MeshInstance3D.new()
+	var right_wall_box := BoxMesh.new()
+	right_wall_box.size = Vector3(wall_thickness, wall_height, elevator_depth)
+	right_wall_mesh.mesh = right_wall_box
+	right_wall_mesh.material_override = wall_mat
+	right_wall.add_child(right_wall_mesh)
+	
+	var right_wall_collision := CollisionShape3D.new()
+	var right_wall_shape := BoxShape3D.new()
+	right_wall_shape.size = Vector3(wall_thickness, wall_height, elevator_depth)
+	right_wall_collision.shape = right_wall_shape
+	right_wall.add_child(right_wall_collision)
+	
+	# Back wall (StaticBody3D with mesh and collision)
+	var back_wall := StaticBody3D.new()
+	back_wall.name = "BackWall"
+	back_wall.position = Vector3(0, wall_height * 0.5, -elevator_depth * 0.5 + wall_thickness * 0.5)
+	_elevator_car.add_child(back_wall)
+	
+	var back_wall_mesh := MeshInstance3D.new()
+	var back_wall_box := BoxMesh.new()
+	back_wall_box.size = Vector3(elevator_width, wall_height, wall_thickness)
+	back_wall_mesh.mesh = back_wall_box
+	back_wall_mesh.material_override = wall_mat
+	back_wall.add_child(back_wall_mesh)
+	
+	var back_wall_collision := CollisionShape3D.new()
+	var back_wall_shape := BoxShape3D.new()
+	back_wall_shape.size = Vector3(elevator_width, wall_height, wall_thickness)
+	back_wall_collision.shape = back_wall_shape
+	back_wall.add_child(back_wall_collision)
+	
+	# Left door (StaticBody3D with mesh and collision)
+	var door_width := elevator_width * 0.5
+	var door_height := wall_height - 0.2
+	var door_thickness := 0.1
+	
+	_left_door = StaticBody3D.new()
+	_left_door.name = "LeftDoor"
+	_left_door.position = Vector3(-door_width * 0.5, wall_height * 0.5, elevator_depth * 0.5)
+	_elevator_car.add_child(_left_door)
+	
+	var left_door_mesh := MeshInstance3D.new()
+	var left_door_box := BoxMesh.new()
+	left_door_box.size = Vector3(door_width, door_height, door_thickness)
+	left_door_mesh.mesh = left_door_box
+	left_door_mesh.material_override = door_mat
+	_left_door.add_child(left_door_mesh)
+	
+	var left_door_collision := CollisionShape3D.new()
+	var left_door_shape := BoxShape3D.new()
+	left_door_shape.size = Vector3(door_width, door_height, door_thickness)
+	left_door_collision.shape = left_door_shape
+	_left_door.add_child(left_door_collision)
+	
+	# Right door (StaticBody3D with mesh and collision)
+	_right_door = StaticBody3D.new()
+	_right_door.name = "RightDoor"
+	_right_door.position = Vector3(door_width * 0.5, wall_height * 0.5, elevator_depth * 0.5)
+	_elevator_car.add_child(_right_door)
+	
+	var right_door_mesh := MeshInstance3D.new()
+	var right_door_box := BoxMesh.new()
+	right_door_box.size = Vector3(door_width, door_height, door_thickness)
+	right_door_mesh.mesh = right_door_box
+	right_door_mesh.material_override = door_mat
+	_right_door.add_child(right_door_mesh)
+	
+	var right_door_collision := CollisionShape3D.new()
+	var right_door_shape := BoxShape3D.new()
+	right_door_shape.size = Vector3(door_width, door_height, door_thickness)
+	right_door_collision.shape = right_door_shape
+	_right_door.add_child(right_door_collision)
 	
 	# Ceiling light
 	var light := OmniLight3D.new()
@@ -138,62 +206,6 @@ func _build_elevator_car() -> void:
 	light.omni_range = 8.0
 	light.position = Vector3(0, elevator_height - 0.2, 0)
 	_elevator_car.add_child(light)
-	
-	# Door frame
-	var door_mat := StandardMaterial3D.new()
-	door_mat.albedo_color = Color(0.5, 0.5, 0.55)
-	door_mat.metallic = 0.5
-	door_mat.roughness = 0.3
-	
-	# Left door
-	_left_door = MeshInstance3D.new()
-	_left_door.name = "LeftDoor"
-	var door_mesh := BoxMesh.new()
-	door_mesh.size = Vector3(elevator_width * 0.5, elevator_height - 0.2, 0.1)
-	_left_door.mesh = door_mesh
-	_left_door.material_override = door_mat
-	_left_door.position = Vector3(-elevator_width * 0.25, elevator_height * 0.5, elevator_depth * 0.5)
-	_elevator_car.add_child(_left_door)
-	
-	# Right door
-	_right_door = MeshInstance3D.new()
-	_right_door.name = "RightDoor"
-	_right_door.mesh = door_mesh
-	_right_door.material_override = door_mat
-	_right_door.position = Vector3(elevator_width * 0.25, elevator_height * 0.5, elevator_depth * 0.5)
-	_elevator_car.add_child(_right_door)
-	
-	# Call button panel
-	var panel := MeshInstance3D.new()
-	panel.name = "ButtonPanel"
-	var panel_mesh := BoxMesh.new()
-	panel_mesh.size = Vector3(0.5, 0.8, 0.05)
-	panel.mesh = panel_mesh
-	var panel_mat := StandardMaterial3D.new()
-	panel_mat.albedo_color = Color(0.2, 0.2, 0.25)
-	panel_mat.roughness = 0.5
-	panel.material_override = panel_mat
-	panel.position = Vector3(elevator_width * 0.5 - 0.3, 1.2, 0)
-	_elevator_car.add_child(panel)
-	
-	# Add button lights
-	for i in range(3):
-		var button_light := MeshInstance3D.new()
-		button_light.name = "Button%d" % (i + 1)
-		var button_mesh := CylinderMesh.new()
-		button_mesh.top_radius = 0.05
-		button_mesh.bottom_radius = 0.05
-		button_mesh.height = 0.02
-		button_light.mesh = button_mesh
-		var button_mat := StandardMaterial3D.new()
-		button_mat.albedo_color = Color(0.1, 0.8, 0.1) if i == _current_floor else Color(0.3, 0.3, 0.3)
-		button_mat.emission_enabled = i == _current_floor
-		button_mat.emission = Color(0.1, 1.0, 0.1)
-		button_mat.emission_energy_multiplier = 2.0 if i == _current_floor else 0.0
-		button_light.material_override = button_mat
-		button_light.position = Vector3(0, 0.25 - i * 0.15, 0.03)
-		button_light.rotation_degrees = Vector3(90, 0, 0)
-		panel.add_child(button_light)
 
 func _process(delta: float) -> void:
 	if _is_moving:
@@ -221,9 +233,10 @@ func _process(delta: float) -> void:
 
 func _update_door_positions() -> void:
 	if _left_door and _right_door:
-		var offset := _door_open_amount * elevator_width * 0.35
-		_left_door.position.x = -elevator_width * 0.25 - offset
-		_right_door.position.x = elevator_width * 0.25 + offset
+		var door_width := elevator_width * 0.5
+		var offset := _door_open_amount * door_width * 0.7
+		_left_door.position.x = -door_width * 0.5 - offset
+		_right_door.position.x = door_width * 0.5 + offset
 
 func _update_floor_indicator() -> void:
 	var indicator := get_node_or_null("FloorIndicator")
@@ -235,6 +248,14 @@ func open_doors() -> void:
 
 func close_doors() -> void:
 	_doors_open = false
+
+func close_doors_slowly() -> void:
+	close_doors()
+	await get_tree().create_timer(1.0 / door_open_speed).timeout
+
+func open_doors_slowly() -> void:
+	open_doors()
+	await get_tree().create_timer(1.0 / door_open_speed).timeout
 
 func move_to_floor(floor: int) -> void:
 	if floor < 0 or floor >= _floors.size():
