@@ -4,13 +4,20 @@ extends Node3D
 const DropCeiling := preload("res://scripts/drop_ceiling.gd")
 const Cubicle := preload("res://scripts/cubicle.gd")
 const Elevator := preload("res://scripts/elevator.gd")
+const ELEVATOR_WALL_NORTH := "north"
+const ELEVATOR_WALL_EAST := "east"
+const ELEVATOR_WALL_SOUTH := "south"
+const ELEVATOR_WALL_WEST := "west"
 
-@export var grid_rows: int = 2
-@export var grid_columns: int = 10
+@export var grid_rows: int = 3
+@export var grid_columns: int = 5
 @export var cubicle_width: float = 4.0
 @export var cubicle_depth: float = 3.0
 @export var aisle_width: float = 6.0
 @export var wall_thickness: float = 0.06
+@export var perimeter_wall_height: float = 2.8
+@export var perimeter_wall_thickness: float = 0.2
+@export var perimeter_wall_color: Color = Color(0.72, 0.74, 0.78)
 
 var _is_ready := false
 
@@ -27,6 +34,7 @@ func _rebuild_office() -> void:
 		var fallback_depth := 6.0
 		var fallback_center := 0.0
 		_create_drop_ceiling(fallback_length, fallback_depth, fallback_center)
+		_create_perimeter_walls(fallback_length, fallback_depth, fallback_center, ELEVATOR_WALL_EAST, 0.0, 0.0)
 		return
 
 	# Calculate grid layout
@@ -113,6 +121,11 @@ func _rebuild_office() -> void:
 	var grid_depth: float = total_unit_depth * float(grid_rows) - aisle_width  # No aisle after last row
 	var grid_start_x: float = -grid_width * 0.5
 	var grid_start_z: float = -grid_depth * 0.5
+	var elevator_column_index: float = min(float(grid_columns) - 1.0, 4.0)
+	var elevator_center_x: float = grid_start_x + elevator_column_index * total_unit_width + unit_width * 0.5
+	var elevator_row_index: float = clampf(floorf(float(grid_rows) * 0.5), 0.0, maxf(0.0, float(grid_rows) - 1.0))
+	var elevator_center_z: float = grid_start_z + elevator_row_index * total_unit_depth + unit_depth * 0.5
+	var elevator_wall: String = ELEVATOR_WALL_EAST if elevator_center_x >= 0.0 else ELEVATOR_WALL_WEST
 	
 	# Position each unit
 	for row_idx in range(grid_rows):
@@ -145,10 +158,7 @@ func _rebuild_office() -> void:
 	var floor_center: float = (min_z + max_z) * 0.5
 	
 	_create_drop_ceiling(floor_length, floor_depth, floor_center)
-	
-	# Create aisle wall with elevator (if grid is large enough)
-	if grid_columns > 4:
-		_create_aisle_wall(grid_start_x, total_unit_width, unit_width, unit_depth)
+	_create_perimeter_walls(floor_length, floor_depth, floor_center, elevator_wall, elevator_center_x, elevator_center_z)
 
 	print("✅ Generated %dx%d unit grid (%d units, %d cubicles total)." % [grid_rows, grid_columns, total_units, total_cubicles])
 
@@ -182,100 +192,196 @@ func _create_drop_ceiling(total_length: float, total_depth: float, center_z: flo
 	add_child(ceiling)
 	ceiling.setup(total_length, total_depth, center_z)
 
-func _create_aisle_wall(grid_start_x: float, total_unit_width: float, unit_width: float, unit_depth: float) -> void:
-	# Create a wall down the aisle
-	var wall_height := 2.5
-	var wall_thickness := 0.15
-	var wall_length := unit_depth  # Spans two cubicles
-	
+func _create_perimeter_walls(total_length: float, total_depth: float, center_z: float, elevator_wall: String, elevator_center_x: float, elevator_center_z: float) -> void:
+	if total_length <= 0.0 or total_depth <= 0.0:
+		return
+	if perimeter_wall_height <= 0.0 or perimeter_wall_thickness <= 0.0:
+		return
+
+	var half_length := total_length * 0.5
+	var half_depth := total_depth * 0.5
+	var wall_y := perimeter_wall_height * 0.5 - 1.0
+
 	var wall_mat := StandardMaterial3D.new()
-	wall_mat.albedo_color = Color(0.75, 0.75, 0.8)
+	wall_mat.albedo_color = perimeter_wall_color
 	wall_mat.roughness = 0.85
-	
-	# Position the wall at a reasonable spot (near middle of grid)
-	var wall_column_index: float = min(float(grid_columns) - 1.0, 4.0)
-	var wall_x: float = grid_start_x + total_unit_width * wall_column_index + unit_width * 0.5
-	
-	# Create wall with hole for elevator (aligned with elevator door position)
-	var elevator_z_position := -1.5  # This matches the elevator position
-	var elevator_opening_z := elevator_z_position  # Center of elevator opening
-	var elevator_opening_width := 2.2  # Slightly larger than elevator width for clearance
-	
-	# Left section of wall (negative Z side)
-	var left_wall_end := elevator_opening_z - elevator_opening_width * 0.5
-	var left_wall_start := -wall_length * 0.5
-	var left_wall_length := left_wall_end - left_wall_start
-	if left_wall_length > 0.1:
-		var left_wall_z := (left_wall_start + left_wall_end) * 0.5
-		var left_wall := StaticBody3D.new()
-		left_wall.name = "AisleWallLeft"
-		left_wall.position = Vector3(wall_x, wall_height * 0.5 - 1.0, left_wall_z)
-		add_child(left_wall)
-		
-		var left_mesh := MeshInstance3D.new()
-		var left_box := BoxMesh.new()
-		left_box.size = Vector3(wall_thickness, wall_height, left_wall_length)
-		left_mesh.mesh = left_box
-		left_mesh.material_override = wall_mat
-		left_wall.add_child(left_mesh)
-		
-		var left_collision := CollisionShape3D.new()
-		var left_shape := BoxShape3D.new()
-		left_shape.size = Vector3(wall_thickness, wall_height, left_wall_length)
-		left_collision.shape = left_shape
-		left_wall.add_child(left_collision)
-	
-	# Right section of wall (positive Z side)
-	var right_wall_start := elevator_opening_z + elevator_opening_width * 0.5
-	var right_wall_end := wall_length * 0.5
-	var right_wall_length := right_wall_end - right_wall_start
-	if right_wall_length > 0.1:
-		var right_wall_z := (right_wall_start + right_wall_end) * 0.5
-		var right_wall := StaticBody3D.new()
-		right_wall.name = "AisleWallRight"
-		right_wall.position = Vector3(wall_x, wall_height * 0.5 - 1.0, right_wall_z)
-		add_child(right_wall)
-		
-		var right_mesh := MeshInstance3D.new()
-		var right_box := BoxMesh.new()
-		right_box.size = Vector3(wall_thickness, wall_height, right_wall_length)
-		right_mesh.mesh = right_box
-		right_mesh.material_override = wall_mat
-		right_wall.add_child(right_mesh)
-		
-		var right_collision := CollisionShape3D.new()
-		var right_shape := BoxShape3D.new()
-		right_shape.size = Vector3(wall_thickness, wall_height, right_wall_length)
-		right_collision.shape = right_shape
-		right_wall.add_child(right_collision)
-	
-	# Add elevator to the aisle wall
-	_create_elevator_on_wall(wall_x, unit_width)
+
+	var north_center := Vector3(0.0, wall_y, center_z - half_depth - perimeter_wall_thickness * 0.5)
+	if elevator_wall == ELEVATOR_WALL_NORTH:
+		_spawn_perimeter_wall_with_elevator("PerimeterWallNorth", north_center, total_length, ELEVATOR_WALL_NORTH, wall_mat, elevator_center_x)
+	else:
+		_spawn_perimeter_wall("PerimeterWallNorth", north_center, Vector3(total_length, perimeter_wall_height, perimeter_wall_thickness), wall_mat)
+
+	var south_center := Vector3(0.0, wall_y, center_z + half_depth + perimeter_wall_thickness * 0.5)
+	if elevator_wall == ELEVATOR_WALL_SOUTH:
+		_spawn_perimeter_wall_with_elevator("PerimeterWallSouth", south_center, total_length, ELEVATOR_WALL_SOUTH, wall_mat, elevator_center_x)
+	else:
+		_spawn_perimeter_wall("PerimeterWallSouth", south_center, Vector3(total_length, perimeter_wall_height, perimeter_wall_thickness), wall_mat)
+
+	var west_center := Vector3(-half_length - perimeter_wall_thickness * 0.5, wall_y, center_z)
+	if elevator_wall == ELEVATOR_WALL_WEST:
+		_spawn_perimeter_wall_with_elevator("PerimeterWallWest", west_center, total_depth, ELEVATOR_WALL_WEST, wall_mat, elevator_center_z)
+	else:
+		_spawn_perimeter_wall("PerimeterWallWest", west_center, Vector3(perimeter_wall_thickness, perimeter_wall_height, total_depth), wall_mat)
+
+	var east_center := Vector3(half_length + perimeter_wall_thickness * 0.5, wall_y, center_z)
+	if elevator_wall == ELEVATOR_WALL_EAST:
+		_spawn_perimeter_wall_with_elevator("PerimeterWallEast", east_center, total_depth, ELEVATOR_WALL_EAST, wall_mat, elevator_center_z)
+	else:
+		_spawn_perimeter_wall("PerimeterWallEast", east_center, Vector3(perimeter_wall_thickness, perimeter_wall_height, total_depth), wall_mat)
+
+func _spawn_perimeter_wall_with_elevator(base_name: String, wall_center: Vector3, span_length: float, wall_id: String, material: StandardMaterial3D, elevator_axis_center: float) -> void:
+	if span_length <= 0.0:
+		return
+
+	var opening_width: float = 2.4
+	opening_width = clampf(opening_width, 0.0, maxf(0.0, span_length - 0.5))
+	var half_opening: float = opening_width * 0.5
+	var margin: float = maxf(0.25, perimeter_wall_thickness)
+	var start := -span_length * 0.5
+	var end := span_length * 0.5
+	var axis_origin := wall_center.x if wall_id == ELEVATOR_WALL_NORTH or wall_id == ELEVATOR_WALL_SOUTH else wall_center.z
+	var local_axis_center := elevator_axis_center - axis_origin
+	var min_center := start + half_opening + margin
+	var max_center := end - half_opening - margin
+	var clamped_center: float
+	if min_center > max_center:
+		clamped_center = (start + end) * 0.5
+	else:
+		clamped_center = clampf(local_axis_center, min_center, max_center)
+	var left_end := clamped_center - half_opening
+	var right_start := clamped_center + half_opening
+
+	if left_end - start > 0.05:
+		var left_length: float = left_end - start
+		var left_center := (start + left_end) * 0.5
+		var left_position := wall_center
+		var left_size: Vector3
+		if wall_id == ELEVATOR_WALL_NORTH or wall_id == ELEVATOR_WALL_SOUTH:
+			left_position.x = wall_center.x + left_center
+			left_size = Vector3(left_length, perimeter_wall_height, perimeter_wall_thickness)
+		else:
+			left_position.z = wall_center.z + left_center
+			left_size = Vector3(perimeter_wall_thickness, perimeter_wall_height, left_length)
+		_spawn_perimeter_wall("%s_Left" % base_name, left_position, left_size, material)
+
+	if end - right_start > 0.05:
+		var right_length: float = end - right_start
+		var right_center := (right_start + end) * 0.5
+		var right_position := wall_center
+		var right_size: Vector3
+		if wall_id == ELEVATOR_WALL_NORTH or wall_id == ELEVATOR_WALL_SOUTH:
+			right_position.x = wall_center.x + right_center
+			right_size = Vector3(right_length, perimeter_wall_height, perimeter_wall_thickness)
+		else:
+			right_position.z = wall_center.z + right_center
+			right_size = Vector3(perimeter_wall_thickness, perimeter_wall_height, right_length)
+		_spawn_perimeter_wall("%s_Right" % base_name, right_position, right_size, material)
+
+	var header_height: float = minf(0.35, perimeter_wall_height * 0.25)
+	if header_height > 0.05 and opening_width > 0.2:
+		var header_position := wall_center
+		var header_size: Vector3
+		if wall_id == ELEVATOR_WALL_NORTH or wall_id == ELEVATOR_WALL_SOUTH:
+			header_position.x = wall_center.x + clamped_center
+			header_size = Vector3(opening_width, header_height, perimeter_wall_thickness)
+		else:
+			header_position.z = wall_center.z + clamped_center
+			header_size = Vector3(perimeter_wall_thickness, header_height, opening_width)
+		header_position.y = wall_center.y + (perimeter_wall_height - header_height) * 0.5
+		_spawn_perimeter_wall("%s_Header" % base_name, header_position, header_size, material)
+
+	var door_center := wall_center
+	var inward_normal := Vector3.ZERO
+	var rotation := Vector3.ZERO
+	if wall_id == ELEVATOR_WALL_NORTH:
+		door_center.x = wall_center.x + clamped_center
+		door_center.z = wall_center.z + perimeter_wall_thickness * 0.5
+		inward_normal = Vector3(0.0, 0.0, 1.0)
+		rotation = Vector3.ZERO
+	elif wall_id == ELEVATOR_WALL_SOUTH:
+		door_center.x = wall_center.x + clamped_center
+		door_center.z = wall_center.z - perimeter_wall_thickness * 0.5
+		inward_normal = Vector3(0.0, 0.0, -1.0)
+		rotation = Vector3(0.0, 180.0, 0.0)
+	elif wall_id == ELEVATOR_WALL_EAST:
+		door_center.z = wall_center.z + clamped_center
+		door_center.x = wall_center.x - perimeter_wall_thickness * 0.5
+		inward_normal = Vector3(-1.0, 0.0, 0.0)
+		rotation = Vector3(0.0, -90.0, 0.0)
+	else:
+		door_center.z = wall_center.z + clamped_center
+		door_center.x = wall_center.x + perimeter_wall_thickness * 0.5
+		inward_normal = Vector3(1.0, 0.0, 0.0)
+		rotation = Vector3(0.0, 90.0, 0.0)
+
+	_create_elevator_on_perimeter(door_center, inward_normal, rotation)
+
+func _spawn_perimeter_wall(name: String, position: Vector3, size: Vector3, material: StandardMaterial3D) -> void:
+	var wall_body := StaticBody3D.new()
+	wall_body.name = name
+	wall_body.position = position
+	add_child(wall_body)
+
+	var wall_mesh := MeshInstance3D.new()
+	var box_mesh := BoxMesh.new()
+	box_mesh.size = size
+	wall_mesh.mesh = box_mesh
+	wall_mesh.material_override = material
+	wall_body.add_child(wall_mesh)
+
+	var wall_collision := CollisionShape3D.new()
+	var box_shape := BoxShape3D.new()
+	box_shape.size = size
+	wall_collision.shape = box_shape
+	wall_body.add_child(wall_collision)
+
+func _create_elevator_on_perimeter(door_center: Vector3, inward_normal: Vector3, rotation_degrees: Vector3) -> void:
+	if Elevator == null:
+		return
+
+	var elevator := Elevator.new()
+	elevator.name = "Elevator"
+
+	elevator.elevator_width = 2.0
+	elevator.elevator_depth = 2.0
+	elevator.elevator_height = max(perimeter_wall_height, 2.5)
+
+	var normal := inward_normal.normalized()
+	var inset := - elevator.elevator_depth * 0.5
+	var depth_offset := normal * inset
+	var base_y := door_center.y - perimeter_wall_height * 0.5
+	elevator.position = Vector3(door_center.x, base_y, door_center.z) + depth_offset
+	elevator.rotation_degrees = rotation_degrees
+
+	add_child(elevator)
+	_position_player_in_elevator(elevator)
+
+func _position_player_in_elevator(elevator: Node3D) -> void:
+	var player: Node3D = get_node_or_null("../Player")
+	if player == null:
+		player = get_tree().get_root().find_child("Player", true, false)
+	if player == null:
+		return
+
+	var spawn_point := elevator.global_transform.origin + elevator.global_transform.basis.z * 0.25
+	var height_offset := player.global_position.y - global_transform.origin.y
+	spawn_point.y = global_transform.origin.y + height_offset
+	player.global_position = spawn_point
+
+	var left_dir := -elevator.global_transform.basis.x
+	left_dir.y = 0.0
+	if left_dir.length_squared() > 0.0001:
+		left_dir = left_dir.normalized()
+		player.look_at(spawn_point + left_dir, Vector3.UP)
+
+	if player is CharacterBody3D:
+		var body := player as CharacterBody3D
+		body.velocity = Vector3.ZERO
+		body.set("target_velocity", Vector3.ZERO)
 
 func _place_cubicle(cubicle: Node3D, target_center: Vector3) -> void:
 	var bounds: Dictionary = cubicle.get_collision_bounds()
 	var center_x: float = (float(bounds.get("min_x", 0.0)) + float(bounds.get("max_x", 0.0))) * 0.5
 	var center_z: float = (float(bounds.get("min_z", 0.0)) + float(bounds.get("max_z", 0.0))) * 0.5
 	cubicle.position = Vector3(target_center.x - center_x, 0.0, target_center.z - center_z)
-
-func _create_elevator_on_wall(wall_x: float, unit_width: float) -> void:
-	if Elevator == null:
-		return
-	
-	var elevator := Elevator.new()
-	elevator.name = "Elevator"
-	
-	# Set elevator dimensions
-	elevator.elevator_width = 2.0
-	elevator.elevator_depth = 2.0
-	elevator.elevator_height = 2.5
-	
-	# Position elevator attached to the wall
-	# Offset by half the elevator depth so it's flush against the wall
-	var elevator_offset := elevator.elevator_depth * 0.5
-	var elevator_x := wall_x + elevator_offset - unit_width * 0.5 + elevator.elevator_width * 0.5 - 0.5
-	var elevator_z := -1.5
-	elevator.position = Vector3(elevator_x, -1.0, elevator_z)  # Y = -1.0 to match floor level
-	elevator.rotation_degrees = Vector3(0, 90, 0)  # Rotate so doors face positive X (into the aisle)
-	
-	add_child(elevator)
