@@ -43,6 +43,7 @@ func _ready() -> void:
 
 func _start_boot_sequence() -> void:
 	var timer := Timer.new()
+	timer.name = "BootTimer"
 	timer.wait_time = 0.05  # speed between lines
 	timer.autostart = true
 	timer.one_shot = false
@@ -62,7 +63,7 @@ func _on_boot_tick() -> void:
 		add_child(end_timer)
 		end_timer.timeout.connect(_load_desktop)
 		end_timer.start()
-		$Timer.queue_free() # stop the main timer
+		get_node("BootTimer").queue_free() # stop the main timer
 
 
 func _load_desktop() -> void:
