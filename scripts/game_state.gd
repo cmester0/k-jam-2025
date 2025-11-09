@@ -17,6 +17,7 @@ var completed_today: bool = false
 
 signal desk_task_flagged
 signal day_progressed(new_day: int)
+signal day_completed(day: int)
 
 func mark_desk_ready() -> void:
 	if completed_today:
@@ -95,7 +96,10 @@ func is_day_complete() -> bool:
 	return completed_today
 
 func flag_day_complete() -> void:
+	if completed_today:
+		return
 	completed_today = true
+	emit_signal("day_completed", current_day)
 
 func get_minigame_for_day(day: int) -> String:
 	return desk_minigame_map.get(day, "")
