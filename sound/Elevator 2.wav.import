@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://bp3idxmrgjgh"
+path="res://.godot/imported/Elevator 2.wav-f8627fdf6f867a1f2ec78825208c9376.sample"
+
+[deps]
+
+source_file="res://sound/Elevator 2.wav"
+dest_files=["res://.godot/imported/Elevator 2.wav-f8627fdf6f867a1f2ec78825208c9376.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

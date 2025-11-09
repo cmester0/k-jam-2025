@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://dgxjll6i4h0ki"
+path="res://.godot/imported/Lysrør pling.wav-58466155b909d8bb1faaf22e29bcaaf0.sample"
+
+[deps]
+
+source_file="res://sound/Lysrør pling.wav"
+dest_files=["res://.godot/imported/Lysrør pling.wav-58466155b909d8bb1faaf22e29bcaaf0.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

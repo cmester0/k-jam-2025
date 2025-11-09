@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://crq5e18ynu10e"
+path="res://.godot/imported/Elevator dør.wav-aea4a92f12d842c152366e25a0ab9369.sample"
+
+[deps]
+
+source_file="res://sound/Elevator dør.wav"
+dest_files=["res://.godot/imported/Elevator dør.wav-aea4a92f12d842c152366e25a0ab9369.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2
