@@ -24,44 +24,68 @@ func _on_body_exited(body: Node) -> void:
 		player_inside = false
 
 func _process(delta):
-	get_tree().root.get_node("./Main/Orb").position = camera_target_position
-		
-	if player_inside and not _is_transitioning and Input.is_action_just_pressed("ui_accept"):
-		if camera == null:
-			return
-		_is_transitioning = true
-		var tween = get_tree().create_tween()
+	var orb := get_tree().root.get_node_or_null("./Main/Orb")
+	if orb:
+		orb.position = camera_target_position
 
-		camera.frozen = true
-		
-		var target_transform = camera.global_transform.looking_at(camera_target_position, Vector3.UP)
-		if typeof(GameState) != TYPE_NIL and GameState:
-			var final_transform := Transform3D(target_transform.basis, camera_target_position)
-			GameState.set_desk_focus_transform(final_transform, camera_move_duration)
-		
-		# Tween the camera's rotation (basis) over 1 second
-		tween.tween_property(
-			camera, "global_transform:basis",
-			target_transform.basis, camera_move_duration
-		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		
-		tween.tween_property(
-			camera,
-			"global_transform:origin",
-			camera_target_position,
-			camera_move_duration
-		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		tween.parallel()
-		tween.tween_property(
-			camera,
-			"rotation_degrees",
-			camera_target_rotation,
-			camera_move_duration
-		).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		
-		tween.tween_callback(_on_tween_finished)
+func _unhandled_input(event: InputEvent) -> void:
+	if not _can_start_transition():
+		return
+	if not (event is InputEventMouseButton):
+		return
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT or not mouse_event.pressed:
+		return
+	_start_transition()
 
 func _on_tween_finished():
 	_is_transitioning = false
 	print("✅ switching sceens.")
 	get_tree().change_scene_to_file(target_scene)
+
+func _can_start_transition() -> bool:
+	if not player_inside or _is_transitioning:
+		return false
+	if camera == null:
+		return false
+	var forward := -camera.global_transform.basis.z
+	if forward.length_squared() <= 0.0001:
+		return false
+	var to_target := camera_target_position - camera.global_transform.origin
+	if to_target.length_squared() <= 0.0001:
+		return false
+	forward = forward.normalized()
+	to_target = to_target.normalized()
+	return forward.dot(to_target) >= 0.75
+
+func _start_transition() -> void:
+	_is_transitioning = true
+	if camera == null:
+		return
+	var tween := get_tree().create_tween()
+	camera.frozen = true
+	var target_transform := camera.global_transform.looking_at(camera_target_position, Vector3.UP)
+	if typeof(GameState) != TYPE_NIL and GameState:
+		var final_transform := Transform3D(target_transform.basis, camera_target_position)
+		GameState.set_desk_focus_transform(final_transform, camera_move_duration)
+	tween.tween_property(
+		camera,
+		"global_transform:basis",
+		target_transform.basis,
+		camera_move_duration
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel()
+	tween.tween_property(
+		camera,
+		"global_transform:origin",
+		camera_target_position,
+		camera_move_duration
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.parallel()
+	tween.tween_property(
+		camera,
+		"rotation_degrees",
+		camera_target_rotation,
+		camera_move_duration
+	).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tween.tween_callback(_on_tween_finished)
