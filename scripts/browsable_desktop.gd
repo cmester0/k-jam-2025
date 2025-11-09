@@ -272,7 +272,7 @@ func _on_folder_opened(folder_name: String, content: Variant) -> void:
 		return
 
 	if open_windows.has(folder_name):
-		var existing_window := open_windows[folder_name]
+		var existing_window: PanelContainer = open_windows[folder_name]
 		if existing_window and is_instance_valid(existing_window):
 			bring_to_front(existing_window)
 		else:

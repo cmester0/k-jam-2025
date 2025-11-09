@@ -236,7 +236,7 @@ func _create_cursor() -> void:
 		cursor_tex = load(texture_path) as Texture2D
 	if cursor_tex:
 		cursor.texture = cursor_tex
-		cursor.scale = Vector2(0.5, 0.5)
+		cursor.scale = Vector2(0.02, 0.02)
 	else:
 		# Create a default cursor if texture fails to load
 		var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
@@ -321,8 +321,8 @@ func _on_exit_computer_pressed() -> void:
 
 
 func _mark_desk_task_complete() -> void:
-	if typeof(GameState) == TYPE_NIL or GameState == null:
-		return
+	# Placeholder for future game state management
+	pass
 
 
 # --- CLOCK SYSTEM ---
@@ -367,7 +367,8 @@ func _update_clock_display() -> void:
 	var hours := clock_start_hour + (total_minutes / 60)
 	var minutes := total_minutes % 60
 	
+	# Round minutes to nearest 5
+	minutes = int(minutes / 5) * 5
+	
 	# Format as HH:MM
 	time_label.text = "%02d:%02d" % [hours, minutes]
-	GameState.mark_desk_ready()
-	GameState.set_next_spawn(GameState.SPAWN_DESK)
