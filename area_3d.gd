@@ -22,8 +22,13 @@ func _on_body_exited(body: Node) -> void:
 		player_inside = false
 
 func _process(delta):
-	get_tree().root.get_node("./Main/Orb").position = camera_target_position
+	if get_tree().root.get_node("./MapLoader/Main/Orb"):
+		get_tree().root.get_node("./MapLoader/Main/Orb").position = camera_target_position
 		
+	if player_inside:
+		if get_parent():
+			get_parent().is_task_solved = true
+
 	if player_inside and Input.is_action_just_pressed("ui_accept"):
 		var tween = get_tree().create_tween()
 		var direction = (camera_target_position - camera.global_transform.origin).normalized()

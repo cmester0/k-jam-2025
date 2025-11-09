@@ -50,7 +50,6 @@ func _physics_process(delta: float) -> void:
 		direction.z -= 1
 	if Input.is_action_pressed("move_forward"):
 		direction.z += 1
-		print("At: ", position)
 		
 	if Input.is_action_just_pressed("stress"):
 		if !stressed_1_var && !stress_pressed:
