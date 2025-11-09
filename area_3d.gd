@@ -22,8 +22,9 @@ func _on_body_exited(body: Node) -> void:
 		player_inside = false
 
 func _process(delta):
-	if get_tree().root.get_node("./MapLoader/Main/Orb"):
-		get_tree().root.get_node("./MapLoader/Main/Orb").position = camera_target_position
+	var orb = get_tree().root.get_node_or_null("./MapLoader/Main/Orb")
+	if orb:
+		orb.position = camera_target_position
 		
 	if player_inside:
 		if get_parent():
