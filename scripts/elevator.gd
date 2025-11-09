@@ -346,6 +346,7 @@ func _attempt_start_new_day() -> void:
 		close_doors()
 		print("Elevator departing for day %d." % GameState.current_day)
 		_set_button_enabled(false)
+		GameState.set_next_spawn(GameState.SPAWN_ELEVATOR)
 		_schedule_door_reopen()
 
 func _connect_to_game_state() -> void:

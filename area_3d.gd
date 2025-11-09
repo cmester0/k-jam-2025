@@ -33,13 +33,13 @@ func _process(delta):
 		_is_transitioning = true
 		_mark_task_ready()
 		var tween = get_tree().create_tween()
-		var direction = (camera_target_position - camera.global_transform.origin).normalized()
-		
-		# Apply rotation
+
 		camera.frozen = true
 		
-		# Assume `camera` is a Camera3D node and `target_position` is a Vector3
 		var target_transform = camera.global_transform.looking_at(camera_target_position, Vector3.UP)
+		if typeof(GameState) != TYPE_NIL and GameState:
+			var final_transform := Transform3D(target_transform.basis, camera_target_position)
+			GameState.set_desk_focus_transform(final_transform, camera_move_duration)
 		
 		# Tween the camera's rotation (basis) over 1 second
 		tween.tween_property(
@@ -73,5 +73,6 @@ func _mark_task_ready() -> void:
 		return
 	if typeof(GameState) != TYPE_NIL and GameState:
 		GameState.mark_desk_ready()
+		GameState.set_next_spawn(GameState.SPAWN_DESK)
 	else:
 		print("Desk trigger missing GameState singleton.")

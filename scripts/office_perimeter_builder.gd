@@ -11,7 +11,7 @@ var _elevator_script: Script
 func _init(elevator_script: Script) -> void:
 	_elevator_script = elevator_script
 
-func create_perimeter(owner: Node3D, params: Dictionary) -> void:
+func create_perimeter(owner: Node3D, params: Dictionary) -> Node3D:
 	var total_length: float = float(params.get("total_length", 0.0))
 	var total_depth: float = float(params.get("total_depth", 0.0))
 	var center_z: float = float(params.get("center_z", 0.0))
@@ -23,9 +23,9 @@ func create_perimeter(owner: Node3D, params: Dictionary) -> void:
 	var wall_color: Color = params.get("perimeter_wall_color", Color(0.72, 0.74, 0.78))
 
 	if total_length <= 0.0 or total_depth <= 0.0:
-		return
+		return null
 	if wall_height <= 0.0 or wall_thickness <= 0.0:
-		return
+		return null
 
 	var half_length := total_length * 0.5
 	var half_depth := total_depth * 0.5
@@ -35,29 +35,32 @@ func create_perimeter(owner: Node3D, params: Dictionary) -> void:
 	wall_mat.albedo_color = wall_color
 	wall_mat.roughness = 0.85
 
+	var elevator_ref: Node3D = null
 	var north_center := Vector3(0.0, wall_y, center_z - half_depth - wall_thickness * 0.5)
 	if elevator_wall == WALL_NORTH:
-		_spawn_wall_with_elevator(owner, "PerimeterWallNorth", north_center, total_length, WALL_NORTH, wall_mat, elevator_center_x, wall_height, wall_thickness)
+		elevator_ref = _spawn_wall_with_elevator(owner, "PerimeterWallNorth", north_center, total_length, WALL_NORTH, wall_mat, elevator_center_x, wall_height, wall_thickness)
 	else:
 		_spawn_wall(owner, "PerimeterWallNorth", north_center, Vector3(total_length, wall_height, wall_thickness), wall_mat)
 
 	var south_center := Vector3(0.0, wall_y, center_z + half_depth + wall_thickness * 0.5)
 	if elevator_wall == WALL_SOUTH:
-		_spawn_wall_with_elevator(owner, "PerimeterWallSouth", south_center, total_length, WALL_SOUTH, wall_mat, elevator_center_x, wall_height, wall_thickness)
+		elevator_ref = _spawn_wall_with_elevator(owner, "PerimeterWallSouth", south_center, total_length, WALL_SOUTH, wall_mat, elevator_center_x, wall_height, wall_thickness)
 	else:
 		_spawn_wall(owner, "PerimeterWallSouth", south_center, Vector3(total_length, wall_height, wall_thickness), wall_mat)
 
 	var west_center := Vector3(-half_length - wall_thickness * 0.5, wall_y, center_z)
 	if elevator_wall == WALL_WEST:
-		_spawn_wall_with_elevator(owner, "PerimeterWallWest", west_center, total_depth, WALL_WEST, wall_mat, elevator_center_z, wall_height, wall_thickness)
+		elevator_ref = _spawn_wall_with_elevator(owner, "PerimeterWallWest", west_center, total_depth, WALL_WEST, wall_mat, elevator_center_z, wall_height, wall_thickness)
 	else:
 		_spawn_wall(owner, "PerimeterWallWest", west_center, Vector3(wall_thickness, wall_height, total_depth), wall_mat)
 
 	var east_center := Vector3(half_length + wall_thickness * 0.5, wall_y, center_z)
 	if elevator_wall == WALL_EAST:
-		_spawn_wall_with_elevator(owner, "PerimeterWallEast", east_center, total_depth, WALL_EAST, wall_mat, elevator_center_z, wall_height, wall_thickness)
+		elevator_ref = _spawn_wall_with_elevator(owner, "PerimeterWallEast", east_center, total_depth, WALL_EAST, wall_mat, elevator_center_z, wall_height, wall_thickness)
 	else:
 		_spawn_wall(owner, "PerimeterWallEast", east_center, Vector3(wall_thickness, wall_height, total_depth), wall_mat)
+
+	return elevator_ref
 
 func _spawn_wall(owner: Node3D, name: String, position: Vector3, size: Vector3, material: StandardMaterial3D) -> void:
 	var wall_body := StaticBody3D.new()
@@ -88,9 +91,9 @@ func _spawn_wall_with_elevator(
 	elevator_axis_center: float,
 	wall_height: float,
 	wall_thickness: float
-) -> void:
+	) -> Node3D:
 	if span_length <= 0.0:
-		return
+		return null
 
 	var opening_width: float = clampf(2.4, 0.0, maxf(0.0, span_length - 0.5))
 	var half_opening: float = opening_width * 0.5
@@ -168,7 +171,7 @@ func _spawn_wall_with_elevator(
 		inward_normal = Vector3(1.0, 0.0, 0.0)
 		rotation = Vector3(0.0, 90.0, 0.0)
 
-	_create_elevator(owner, door_center, inward_normal, rotation, wall_height, wall_thickness)
+	return _create_elevator(owner, door_center, inward_normal, rotation, wall_height, wall_thickness)
 
 func _create_elevator(
 	owner: Node3D,
@@ -177,15 +180,15 @@ func _create_elevator(
 	rotation_degrees: Vector3,
 	wall_height: float,
 	wall_thickness: float
-) -> void:
+	) -> Node3D:
 	if _elevator_script == null:
-		return
+		return null
 	var elevator_instance: Object = _elevator_script.new()
 	if elevator_instance == null:
-		return
+		return null
 	var elevator: Node3D = elevator_instance as Node3D
 	if elevator == null:
-		return
+		return null
 	elevator.name = "Elevator"
 	var elevator_height_value: float = maxf(wall_height, 2.5)
 	elevator.set("elevator_width", 2.0)
@@ -201,27 +204,4 @@ func _create_elevator(
 	elevator.rotation_degrees = rotation_degrees
 
 	owner.add_child(elevator)
-	_position_player(owner, elevator)
-
-func _position_player(owner: Node3D, elevator: Node3D) -> void:
-	var player: Node3D = owner.get_node_or_null("../Player")
-	if player == null:
-		player = owner.get_tree().get_root().find_child("Player", true, false)
-	if player == null:
-		return
-
-	var spawn_point := elevator.global_transform.origin + elevator.global_transform.basis.z * 0.25
-	var height_offset := player.global_position.y - owner.global_transform.origin.y
-	spawn_point.y = owner.global_transform.origin.y + height_offset
-	player.global_position = spawn_point
-
-	var forward_dir := elevator.global_transform.basis.z
-	forward_dir.y = 0.0
-	if forward_dir.length_squared() > 0.0001:
-		forward_dir = forward_dir.normalized()
-		player.look_at(spawn_point + forward_dir, Vector3.UP)
-
-	if player is CharacterBody3D:
-		var body := player as CharacterBody3D
-		body.velocity = Vector3.ZERO
-		body.set("target_velocity", Vector3.ZERO)
+	return elevator

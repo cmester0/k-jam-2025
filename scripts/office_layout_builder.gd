@@ -161,14 +161,27 @@ func _place_cubicle(cubicle: Node3D, target_center: Vector3) -> void:
 	cubicle.position = Vector3(target_center.x - center_x, 0.0, target_center.z - center_z)
 
 	if cubicle.employee_id == 10:
-		cubicle.get_tree().root.get_node("./Main/Area3D").position = cubicle.position # .transform.origin.x = 0
-		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position = cubicle.position # .transform.origin.x = 0
-		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position.y += 3.15
-		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position.x -= 1
-		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position.z += 0
+		var desk_area := cubicle.get_tree().root.get_node("./Main/Area3D")
+		desk_area.position = cubicle.position
+		desk_area.camera_target_position = cubicle.position
+		desk_area.camera_target_position.y += 3.15
+		desk_area.camera_target_position.x -= 1
+		desk_area.camera_target_position.z += 0
+		desk_area.camera_target_rotation = -Vector3(0.0, 0.0, 0.0)
 
-		cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_rotation = -Vector3(0.0, 0.0, 0.0);
-		# scubicle.get_tree().root.get_node("./Main/Orb").position = cubicle.get_tree().root.get_node("./Main/Area3D").camera_target_position;
-
-		# .camera_target_position
-		print("here: ", cubicle.position)
+		if typeof(GameState) != TYPE_NIL and GameState:
+			var cubicle_transform := cubicle.global_transform
+			var forward := -cubicle_transform.basis.z
+			if forward.length_squared() > 0.0001:
+				forward = forward.normalized()
+			else:
+				forward = Vector3.FORWARD
+			var spawn_distance := 1.6
+			var spawn_position := cubicle_transform.origin - forward * spawn_distance
+			var look_target := cubicle_transform.origin
+			var player := cubicle.get_tree().root.find_child("Player", true, false)
+			if player and player is Node3D:
+				spawn_position.y = (player as Node3D).global_transform.origin.y
+			else:
+				spawn_position.y = look_target.y
+			GameState.set_desk_spawn(spawn_position, look_target)
