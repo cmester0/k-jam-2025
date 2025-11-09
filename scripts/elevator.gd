@@ -20,6 +20,13 @@ var _right_door: StaticBody3D
 var _door_open_amount: float = 0.0
 var _interaction_area: Area3D
 var _player_inside: bool = false
+var _player_camera: Camera3D
+var _button_body: StaticBody3D
+var _button_material: StandardMaterial3D
+var _button_enabled: bool = false
+var _button_focused: bool = false
+var _button_emission_phase: float = 0.0
+var _button_blink_speed: float = 1.2
 
 func setup(width: float, depth: float, height: float) -> void:
 	elevator_width = width
@@ -36,6 +43,7 @@ func _ready() -> void:
 	# Open doors after 1 second
 	await get_tree().create_timer(1.0).timeout
 	open_doors()
+	call_deferred("_connect_to_game_state")
 
 func _rebuild() -> void:
 	_clear_children()
@@ -210,6 +218,7 @@ func _build_elevator_car() -> void:
 	_elevator_car.add_child(light)
 
 	_create_interaction_area()
+	_create_control_button()
 
 func _process(delta: float) -> void:
 	if _is_moving:
@@ -235,8 +244,8 @@ func _process(delta: float) -> void:
 		_door_open_amount = max(0.0, _door_open_amount - delta * door_open_speed)
 		_update_door_positions()
 
-	if _player_inside and Input.is_action_just_pressed("ui_accept"):
-		_attempt_start_new_day()
+	_update_button_focus()
+	_update_button_emission(delta)
 
 func _update_door_positions() -> void:
 	if _left_door and _right_door:
@@ -296,7 +305,7 @@ func _create_interaction_area() -> void:
 
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
-	box.size = Vector3(elevator_width * 0.9, elevator_height, elevator_depth * 0.9)
+	box.size = Vector3(elevator_width * 1.6, elevator_height, elevator_depth * 1.6)
 	shape.shape = box
 	shape.position = Vector3.ZERO
 	_interaction_area.add_child(shape)
@@ -316,6 +325,13 @@ func _on_interaction_body_exited(body: Node) -> void:
 		return
 	_player_inside = false
 	print("Elevator interaction cleared.")
+	var day_ready := typeof(GameState) != TYPE_NIL and GameState and GameState.can_start_new_day()
+	if not day_ready:
+		close_doors()
+		print("Elevator doors closing until desk work is complete.")
+	if _button_focused:
+		_button_focused = false
+		_update_button_visual()
 
 func _attempt_start_new_day() -> void:
 	if _is_moving:
@@ -327,4 +343,166 @@ func _attempt_start_new_day() -> void:
 		print("Elevator: finish your desk work before leaving.")
 		return
 	if GameState.start_new_day():
+		close_doors()
 		print("Elevator departing for day %d." % GameState.current_day)
+		_set_button_enabled(false)
+		_schedule_door_reopen()
+
+func _connect_to_game_state() -> void:
+	if typeof(GameState) == TYPE_NIL or GameState == null:
+		return
+	var ready_callable := Callable(self, "_on_desk_task_ready")
+	if not GameState.desk_task_flagged.is_connected(ready_callable):
+		GameState.desk_task_flagged.connect(ready_callable)
+	var day_callable := Callable(self, "_on_day_progressed")
+	if not GameState.day_progressed.is_connected(day_callable):
+		GameState.day_progressed.connect(day_callable)
+	var day_ready := GameState.can_start_new_day()
+	_set_button_enabled(day_ready)
+	if day_ready:
+		open_doors()
+
+func _on_desk_task_ready() -> void:
+	open_doors()
+	_set_button_enabled(true)
+	print("Elevator doors opening. Desk work complete.")
+
+func _on_day_progressed(new_day: int) -> void:
+	print("Elevator prep for day %d." % new_day)
+	_set_button_enabled(false)
+
+func _schedule_door_reopen(delay: float = 1.0) -> void:
+	if delay <= 0.0:
+		open_doors()
+		return
+	var timer := get_tree().create_timer(delay)
+	timer.timeout.connect(Callable(self, "_on_reopen_timer_timeout"))
+
+func _on_reopen_timer_timeout() -> void:
+	open_doors()
+
+func _create_control_button() -> void:
+	var panel := StaticBody3D.new()
+	panel.name = "ControlPanel"
+	panel.position = Vector3(elevator_width * 0.5 - 0.1, elevator_height * 0.35, 0.0)
+	panel.rotation_degrees = Vector3(0, -90, 0)
+	_elevator_car.add_child(panel)
+
+	var panel_mesh := MeshInstance3D.new()
+	var panel_cylinder := CylinderMesh.new()
+	panel_cylinder.top_radius = 0.18
+	panel_cylinder.bottom_radius = 0.18
+	panel_cylinder.height = 0.04
+	panel_cylinder.radial_segments = 32
+	panel_mesh.rotation_degrees = Vector3(90, 0, 0)
+	panel_mesh.mesh = panel_cylinder
+	var panel_mat := StandardMaterial3D.new()
+	panel_mat.albedo_color = Color(0.25, 0.25, 0.28)
+	panel_mat.metallic = 0.8
+	panel_mat.roughness = 0.2
+	panel_mat.clearcoat = 0.6
+	panel_mat.clearcoat_gloss = 0.8
+	panel_mesh.material_override = panel_mat
+	panel.add_child(panel_mesh)
+
+	_button_body = StaticBody3D.new()
+	_button_body.name = "StartButton"
+	_button_body.position = Vector3(0.0, 0.0, 0.032)
+	panel.add_child(_button_body)
+
+	var button_mesh := MeshInstance3D.new()
+	var button_cylinder := CylinderMesh.new()
+	button_cylinder.top_radius = 0.08
+	button_cylinder.bottom_radius = 0.08
+	button_cylinder.height = 0.045
+	button_cylinder.radial_segments = 32
+	button_mesh.mesh = button_cylinder
+	button_mesh.rotation_degrees = Vector3(90, 0, 0)
+	_button_material = StandardMaterial3D.new()
+	_button_material.albedo_color = Color(0.05, 0.05, 0.07)
+	_button_material.metallic = 1.0
+	_button_material.roughness = 0.08
+	_button_material.emission_enabled = true
+	_button_material.emission = Color(0.8, 0.05, 0.1)
+	_button_material.emission_energy_multiplier = 0.0
+	button_mesh.material_override = _button_material
+	_button_body.add_child(button_mesh)
+
+	var button_shape := CollisionShape3D.new()
+	var button_plate := CylinderShape3D.new()
+	button_plate.radius = 0.2
+	button_plate.height = 0.08
+	button_shape.shape = button_plate
+	_button_body.add_child(button_shape)
+
+	_update_button_visual()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not _button_enabled or not _button_focused:
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+		_attempt_start_new_day()
+
+func _update_button_focus() -> void:
+	var focused := false
+	if _button_enabled and _player_inside and _button_body:
+		var camera := _get_player_camera()
+		if camera:
+			var from := camera.global_transform.origin
+			var forward := -camera.global_transform.basis.z
+			var to := from + forward * 4.0
+			var query := PhysicsRayQueryParameters3D.new()
+			query.from = from
+			query.to = to
+			var exclude: Array = [camera]
+			var parent := camera.get_parent()
+			if parent:
+				exclude.append(parent)
+			query.exclude = exclude
+			query.collide_with_areas = true
+			query.collide_with_bodies = true
+			var result := get_world_3d().direct_space_state.intersect_ray(query)
+			if result:
+				var collider: Object = result.get("collider")
+				if collider == _button_body:
+					focused = true
+	if focused != _button_focused:
+		_button_focused = focused
+		_update_button_visual()
+
+func _update_button_visual() -> void:
+	if _button_material == null:
+		return
+	var color := Color(0.1, 0.1, 0.12)
+	if _button_enabled:
+		color = Color(0.12, 0.12, 0.16)
+		if _button_focused:
+			color = Color(0.18, 0.2, 0.26)
+	_button_material.albedo_color = color
+
+func _set_button_enabled(enabled: bool) -> void:
+	_button_enabled = enabled
+	if not enabled and _button_focused:
+		_button_focused = false
+	if not enabled:
+		_button_emission_phase = 0.0
+	_update_button_visual()
+
+func _get_player_camera() -> Camera3D:
+	if _player_camera and is_instance_valid(_player_camera):
+		return _player_camera
+	var player := get_tree().root.find_child("Player", true, false)
+	if player and player.has_node("Camera3D"):
+		_player_camera = player.get_node("Camera3D") as Camera3D
+	return _player_camera
+
+func _update_button_emission(delta: float) -> void:
+	if _button_material == null:
+		return
+	var intensity := 0.0
+	if _button_enabled:
+		_button_emission_phase = fmod(_button_emission_phase + delta * _button_blink_speed * TAU, TAU)
+		intensity = 0.5 + 0.5 * sin(_button_emission_phase)
+	else:
+		_button_emission_phase = 0.0
+	_button_material.emission_energy_multiplier = intensity * 3.5
