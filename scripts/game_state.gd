@@ -115,6 +115,42 @@ func mark_desk_ready() -> void:
 func can_start_new_day() -> bool:
 	return completed_today
 
+func play_sound_once(sound_path: String, start_time: float = 0.0):
+	# Create an AudioStreamPlayer node
+	var player := AudioStreamPlayer.new()
+	
+	# Load the sound
+	player.stream = load(sound_path)
+	
+	# Add it as a child so it can play
+	add_child(player)
+	
+	# Play the sound
+	player.play(start_time)
+
+	# Connect to "finished" signal to remove it when done
+	player.finished.connect(func():
+		player.queue_free()
+	)
+	
+	return player
+
+func play_sound_segment_3d(sound_path: String, position: Vector3, start_time: float = 0.0):
+	var player := AudioStreamPlayer3D.new()
+	player.stream = load(sound_path)
+	player.transform.origin = position  # Set the 3D location
+	add_child(player)
+
+	player.play(start_time)
+	
+	# Connect to "finished" signal to remove it when done
+	player.finished.connect(func():
+		player.queue_free()
+	)
+	
+	return player
+	
+
 func start_new_day() -> bool:
 	if not completed_today:
 		return false
@@ -123,6 +159,11 @@ func start_new_day() -> bool:
 	play_day_music()
 	emit_signal("day_progressed", current_day)
 	print("GameState: Advancing to day %d." % current_day)
+	
+	if (current_day == 1):
+		print("Play sound")
+		play_sound_once("res://sound/Elevator 1.wav")
+	
 	return true
 
 func reset_progress() -> void:

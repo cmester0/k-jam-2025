@@ -79,6 +79,7 @@ func _process(delta: float) -> void:
 				flicker_time = 0.0
 	elif next_flicker_burst_in <= 0.0:
 		is_flickering = true
+		GameState.play_sound_segment_3d("res://sound/Lysrør pling.wav", get_parent().get_parent().position, 24.0-1.0)
 		flicker_burst_time = 0.0
 	else:
 		# Steady light (no flickering)

@@ -11,10 +11,10 @@ func _ready():
 	]
 	volume_db = -15
 
-var delay = 0
+var delay = 10
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
+func _process(delta: float) -> void:	
 	delay -= delta
 	if playing || delay > 0:
 		return
@@ -24,5 +24,6 @@ func _process(delta: float) -> void:
 		var index = randi() % sounds.size()
 		stream = sounds[index]
 		play()
+		delay = 10
 	else:
 		delay = 2

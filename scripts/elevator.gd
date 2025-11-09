@@ -44,6 +44,7 @@ func _ready() -> void:
 	_doors_open = false
 	_door_open_amount = 0.0
 	call_deferred("_update_door_positions")
+	GameState.play_sound_once("res://sound/Elevator sound.wav", 30.8)
 	# Open doors after 1 second
 	await get_tree().create_timer(1.0).timeout
 	open_doors()
@@ -299,9 +300,12 @@ func _update_floor_indicator() -> void:
 
 func open_doors() -> void:
 	_doors_open = true
+	GameState.play_sound_segment_3d("res://sound/Elevator ding.wav", _elevator_car.position)
+	GameState.play_sound_segment_3d("res://sound/Elevator dør.wav", _elevator_car.position)
 
 func close_doors() -> void:
 	_doors_open = false
+	GameState.play_sound_segment_3d("res://sound/Elevator dør.wav", _elevator_car.position)
 
 func close_doors_slowly() -> void:
 	close_doors()
@@ -357,6 +361,7 @@ func _on_interaction_body_entered(body: Node) -> void:
 		return
 	_player_inside = true
 	print("Elevator ready for new day check.")
+
 	_set_crosshair(true, _button_enabled and _button_focused)
 
 func _on_interaction_body_exited(body: Node) -> void:
@@ -364,6 +369,7 @@ func _on_interaction_body_exited(body: Node) -> void:
 		return
 	_player_inside = false
 	print("Elevator interaction cleared.")
+	
 	var day_ready := typeof(GameState) != TYPE_NIL and GameState and GameState.can_start_new_day()
 	if not day_ready:
 		close_doors()
@@ -385,6 +391,16 @@ func _attempt_start_new_day() -> void:
 	if GameState.start_new_day():
 		close_doors()
 		print("Elevator departing for day %d." % GameState.current_day)
+		GameState.play_sound_segment_3d("res://sound/Elevator sound.wav", _elevator_car.position, 30.8)
+
+		if (GameState.current_day == 2):
+			print("Play sound 1")
+			GameState.play_sound_once("res://sound/Elevator 1.wav")
+
+		if (GameState.current_day == 3):
+			print("Play sound 2")
+			GameState.play_sound_once("res://sound/Elevator 2.wav")
+
 		_set_button_enabled(false)
 		_set_crosshair(false, false)
 		GameState.set_next_spawn(GameState.SPAWN_ELEVATOR)
