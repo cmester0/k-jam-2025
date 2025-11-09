@@ -18,7 +18,8 @@ func _ready():
 func _on_body_entered(body: Node) -> void:
 	if body.name == "Player":
 		player_inside = true
-		_set_crosshair(true, false)
+		var day_locked := typeof(GameState) != TYPE_NIL and GameState and GameState.is_day_complete()
+		_set_crosshair(not day_locked, false)
 
 func _on_body_exited(body: Node) -> void:
 	if body.name == "Player":
@@ -30,11 +31,14 @@ func _process(delta):
 	if orb:
 		orb.position = camera_target_position
 
+	var day_locked := typeof(GameState) != TYPE_NIL and GameState and GameState.is_day_complete()
 	if player_inside:
-		if _is_transitioning:
+		if _is_transitioning or day_locked:
 			_set_crosshair(false, false)
 		else:
 			_set_crosshair(true, _can_start_transition())
+	else:
+		_set_crosshair(false, false)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _can_start_transition():
@@ -56,6 +60,8 @@ func _can_start_transition() -> bool:
 		return false
 	if camera == null:
 		return false
+	if typeof(GameState) != TYPE_NIL and GameState and GameState.is_day_complete():
+		return false
 	var forward := -camera.global_transform.basis.z
 	if forward.length_squared() <= 0.0001:
 		return false
@@ -67,6 +73,8 @@ func _can_start_transition() -> bool:
 	return forward.dot(to_target) >= 0.75
 
 func _start_transition() -> void:
+	if typeof(GameState) != TYPE_NIL and GameState and GameState.is_day_complete():
+		return
 	_is_transitioning = true
 	if camera == null:
 		return
