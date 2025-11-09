@@ -230,19 +230,55 @@ func find_child_by_name(root: Node, name: String) -> Node:
 
 func _create_cursor() -> void:
 	cursor = Sprite2D.new()
-	var texture_path := "res://textures/cursor.png"
-	var cursor_tex: Texture2D = null
-	if ResourceLoader.exists(texture_path):
-		cursor_tex = load(texture_path) as Texture2D
-	if cursor_tex:
-		cursor.texture = cursor_tex
-		cursor.scale = Vector2(0.02, 0.02)
-	else:
-		# Create a default cursor if texture fails to load
-		var img := Image.create(16, 16, false, Image.FORMAT_RGBA8)
-		img.fill(Color.WHITE)
-		var tex := ImageTexture.create_from_image(img)
-		cursor.texture = tex
+	
+	# Create a sharp arrow cursor with black outline
+	var cursor_size := 20
+	var img := Image.create(cursor_size, cursor_size, false, Image.FORMAT_RGBA8)
+	img.fill(Color.TRANSPARENT)
+	
+	# Define arrow shape with sharp corners
+	# Main body (vertical part)
+	for y in range(14):
+		var width := int(y * 0.5) + 1
+		for x in range(width):
+			img.set_pixel(x, y, Color.BLACK)
+	
+	# Bottom sharp point (triangle)
+	var bottom_start_y := 7
+	var bottom_points := [
+		[3, bottom_start_y], [4, bottom_start_y],
+		[4, bottom_start_y + 1], [5, bottom_start_y + 1],
+		[5, bottom_start_y + 2], [6, bottom_start_y + 2],
+		[6, bottom_start_y + 3], [7, bottom_start_y + 3],
+		[7, bottom_start_y + 4], [8, bottom_start_y + 4],
+		[5, bottom_start_y + 5], [6, bottom_start_y + 5], [7, bottom_start_y + 5],
+		[6, bottom_start_y + 6]
+	]
+	for point in bottom_points:
+		if point[0] < cursor_size and point[1] < cursor_size:
+			img.set_pixel(point[0], point[1], Color.BLACK)
+	
+	# Draw white fill (1 pixel inset from black outline)
+	for y in range(1, 13):
+		var width := int(y * 0.5)
+		for x in range(1, width):
+			img.set_pixel(x, y, Color.WHITE)
+	
+	# White fill for bottom triangle
+	var white_points := [
+		[4, bottom_start_y + 1],
+		[5, bottom_start_y + 2],
+		[6, bottom_start_y + 3],
+		[7, bottom_start_y + 4],
+		[6, bottom_start_y + 5]
+	]
+	for point in white_points:
+		if point[0] < cursor_size and point[1] < cursor_size:
+			img.set_pixel(point[0], point[1], Color.WHITE)
+	
+	var tex := ImageTexture.create_from_image(img)
+	cursor.texture = tex
+	cursor.centered = false
 	cursor.position = Vector2(100, 100)
 	add_child(cursor)
 	cursor.z_index = RenderingServer.CANVAS_ITEM_Z_MAX
