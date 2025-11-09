@@ -553,6 +553,10 @@ func _cut_to_black_and_return_to_office() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	const EXIT_SCENE_PATH := "res://node_3d.tscn"
 	
+	# Set spawn location to desk after exiting computer
+	if typeof(GameState) != TYPE_NIL and GameState:
+		GameState.set_next_spawn(GameState.SPAWN_DESK)
+	
 	if ResourceLoader.exists(EXIT_SCENE_PATH):
 		get_tree().change_scene_to_file(EXIT_SCENE_PATH)
 		print("🏢 Returning to office...")
