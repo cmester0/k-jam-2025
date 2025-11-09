@@ -999,10 +999,19 @@ func _collect_shake_targets() -> Array[Control]:
 		targets.append(mail_message_window)
 	if send_prompt_window and is_instance_valid(send_prompt_window):
 		targets.append(send_prompt_window)
-	for window_value in open_windows.values():
-		var panel := window_value as PanelContainer
-		if panel and is_instance_valid(panel):
-			targets.append(panel)
+	var invalid_keys: Array = []
+	for window_key in open_windows.keys():
+		var window_value = open_windows[window_key]
+		if not is_instance_valid(window_value):
+			invalid_keys.append(window_key)
+			continue
+		var control_window := window_value as Control
+		if control_window:
+			targets.append(control_window)
+		else:
+			invalid_keys.append(window_key)
+	for key in invalid_keys:
+		open_windows.erase(key)
 	return targets
 
 
