@@ -44,7 +44,10 @@ func _ready() -> void:
 	_doors_open = false
 	_door_open_amount = 0.0
 	GameState.play_sound_once("res://sound/Elevator sound.wav", 30.8-3.0)
-	await get_tree().create_timer(3.0).timeout
+	
+	var tree := get_tree()
+	if tree:
+		await tree.create_timer(3.0).timeout
 	call_deferred("_update_door_positions")
 	
 	# Only play welcome sound on the very first spawn of the game
@@ -56,7 +59,8 @@ func _ready() -> void:
 		print("Not first spawn - skipping welcome sound (day %d)" % GameState.current_day)
 	
 	# Open doors after 1 second
-	await get_tree().create_timer(1.0).timeout
+	if tree:
+		await tree.create_timer(1.0).timeout
 	open_doors()
 	call_deferred("_connect_to_game_state")
 
@@ -319,22 +323,28 @@ func close_doors() -> void:
 
 func close_doors_slowly() -> void:
 	close_doors()
-	await get_tree().create_timer(1.0 / door_open_speed).timeout
+	var tree := get_tree()
+	if tree:
+		await tree.create_timer(1.0 / door_open_speed).timeout
 
 func open_doors_slowly() -> void:
 	open_doors()
-	await get_tree().create_timer(1.0 / door_open_speed).timeout
+	var tree := get_tree()
+	if tree:
+		await tree.create_timer(1.0 / door_open_speed).timeout
 
-func move_to_floor(floor: int) -> void:
-	if floor < 0 or floor >= _floors.size():
+func move_to_floor(floor_num: int) -> void:
+	if floor_num < 0 or floor_num >= _floors.size():
 		return
 	if _is_moving:
 		return
 	
-	_target_floor = floor
+	_target_floor = floor_num
 	if _target_floor != _current_floor:
 		close_doors()
-		await get_tree().create_timer(1.0).timeout
+		var tree := get_tree()
+		if tree:
+			await tree.create_timer(1.0).timeout
 		_is_moving = true
 
 func _create_mesh_wall(size: Vector3, material: StandardMaterial3D, pos: Vector3) -> MeshInstance3D:
@@ -408,7 +418,10 @@ func _attempt_start_new_day() -> void:
 		if (GameState.current_day == 3):
 			print("Play sound 2")
 			GameState.play_sound_once("res://sound/Elevator 2.wav")
-		await get_tree().create_timer(10.0).timeout
+		
+		var tree := get_tree()
+		if tree:
+			await tree.create_timer(10.0).timeout
 		print("Elevator departing for day %d." % GameState.current_day)
 
 
@@ -444,7 +457,11 @@ func _schedule_door_reopen(delay: float = 1.0) -> void:
 	if delay <= 0.0:
 		open_doors()
 		return
-	var timer := get_tree().create_timer(delay)
+	var tree := get_tree()
+	if not tree:
+		open_doors()
+		return
+	var timer := tree.create_timer(delay)
 	timer.timeout.connect(Callable(self, "_on_reopen_timer_timeout"))
 
 func _on_reopen_timer_timeout() -> void:
